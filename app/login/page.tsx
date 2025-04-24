@@ -1,4 +1,8 @@
 "use client"
+import supabase from "@/lib/supabase-client"
+
+
+console.log(supabase)
 
 import type React from "react"
 
@@ -25,12 +29,32 @@ export default function LoginPage() {
     e.preventDefault()
     setError("")
     setIsLoading(true)
-
+  
     try {
-      await login(email, password)
+      const { data, error } = await supabase
+        .from("users") 
+        .select("*") // Selecciona los campos necesarios
+        .eq("email", email) // Filtra por el campo de correo electrónico
+        .eq("password", password) // Filtra por el campo de contraseña (asegúrate de manejar contraseñas de forma segura)
+
+        console.log(email, password)
+      if (error) {
+        throw new Error(error.message)
+      }
+  
+      if (!data || data.length === 0) {
+        throw new Error("Credenciales incorrectas. Por favor, verifica tu correo y contraseña.")
+      }
+  
+      console.log("Usuario autenticado:", data[0])
+  
+      // Redirigir al dashboard si la autenticación es exitosa
       router.push("/dashboard")
-    } catch (err) {
-      setError("Credenciales inválidas. Por favor, intenta de nuevo.")
+      console.log("Redirección exitosa")
+      
+      
+    } catch (err: any) {
+      setError(err.message || "Error al iniciar sesión. Por favor, intenta de nuevo.")
     } finally {
       setIsLoading(false)
     }
@@ -38,6 +62,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4">
+      
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">

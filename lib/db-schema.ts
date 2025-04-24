@@ -1,5 +1,5 @@
 // Este archivo define el esquema de la base de datos PostgreSQL
-
+/*
 export interface User {
   id: string
   first_name: string
