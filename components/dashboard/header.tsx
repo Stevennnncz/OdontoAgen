@@ -12,11 +12,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Bell, Settings, User, LogOut } from "lucide-react"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-context/auth-context"
 import { Badge } from "@/components/ui/badge"
 
 export function Header() {
-  const { user, logout } = useAuth()
+  const {user, logout } = useAuth()
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Tu cita ha sido confirmada", read: false },
     { id: 2, text: "Recordatorio: Cita mañana a las 10:00", read: false },
@@ -32,10 +32,7 @@ export function Header() {
     setNotifications(notifications.map((n) => ({ ...n, read: true })))
   }
 
-  const getInitials = () => {
-    if (!user) return "U"
-    return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`
-  }
+
 
   const getRoleName = () => {
     switch (user?.role) {
@@ -58,8 +55,7 @@ export function Header() {
             <Button variant="outline" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
-                  {unreadCount}
+                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">{unreadCount}
                 </span>
               )}
             </Button>
@@ -101,26 +97,14 @@ export function Header() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="/placeholder.svg?height=32&width=32" alt={user?.firstName || "Usuario"} />
-                <AvatarFallback>{getInitials()}</AvatarFallback>
-              </Avatar>
+          <Button variant="outline" size="icon" className="rounded-full ">
+           <User className="h-5 w-5 text-whitr" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent align="end" >
             <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p>
-                  {user?.firstName} {user?.lastName}
-                </p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
-                <Badge variant="outline" className="w-fit mt-1">
-                  {getRoleName()}
-                </Badge>
-              </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            
             <DropdownMenuItem>
               <User className="mr-2 h-4 w-4" />
               <span>Perfil</span>

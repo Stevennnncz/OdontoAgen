@@ -8,7 +8,7 @@ import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-context/auth-context"
 import { cn } from "@/lib/utils"
 import {
   SmileIcon as Tooth,
@@ -29,10 +29,6 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
-  const isAdmin = user?.role === "administrador"
-  const isAssistant = user?.role === "asistente"
-  const isStaff = isAdmin || isAssistant
-
   const routes = [
     {
       label: "Panel Principal",
@@ -52,23 +48,18 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/dashboard/documents",
       active: pathname === "/dashboard/documents",
     },
-    ...(isStaff
-      ? [
-          {
-            label: "Historial Clínico",
-            icon: ClipboardList,
-            href: "/dashboard/records",
-            active: pathname === "/dashboard/records",
-          },
-          {
-            label: "Usuarios",
-            icon: Users,
-            href: "/dashboard/users",
-            active: pathname === "/dashboard/users",
-            adminOnly: true,
-          },
-        ]
-      : []),
+    {
+      label: "Historial Clínico",
+      icon: ClipboardList,
+      href: "/dashboard/records",
+      active: pathname === "/dashboard/records",
+    },
+    {
+      label: "Usuarios",
+      icon: Users,
+      href: "/dashboard/users",
+      active: pathname === "/dashboard/users",
+    },
     {
       label: "Configuración",
       icon: Settings,
@@ -77,21 +68,22 @@ export function Sidebar({ className }: SidebarProps) {
     },
   ]
 
-  const filteredRoutes = routes.filter((route) => !route.adminOnly || isAdmin)
-
   const SidebarContent = (
     <div className={cn("flex h-full flex-col", className)}>
       <div className="flex h-14 items-center border-b px-4">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-          <Tooth className="h-6 w-6 text-blue-600" />
-          <span>Clínica Dental</span>
+        <span className="text-black">Clínica Dental</span>
+        <Tooth className="h-6 w-6 text-black" />
         </Link>
       </div>
       <ScrollArea className="flex-1 py-4">
         <nav className="grid gap-1 px-2">
-          {filteredRoutes.map((route, i) => (
+          {routes.map((route, i) => (
             <Link key={i} href={route.href} onClick={() => setOpen(false)}>
-              <Button variant={route.active ? "secondary" : "ghost"} className="w-full justify-start">
+              <Button
+                variant={route.active ? "secondary" : "ghost"}
+                className={`w-full justify-start ${route.active ? "text-white" : "text-black"} hover:text-white`}
+              >
                 <route.icon className="mr-2 h-5 w-5" />
                 {route.label}
               </Button>
@@ -130,4 +122,3 @@ export function Sidebar({ className }: SidebarProps) {
     </>
   )
 }
-

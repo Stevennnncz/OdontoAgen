@@ -1,101 +1,106 @@
+"use client"
+import supabase from "@/lib/supabase-client"
+import {User} from "@/lib/auth-context/models/interface"
+
+console.log(supabase)
+
+import type React from "react"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { SmileIcon as Tooth } from "lucide-react"
 import Link from "next/link"
-import { SmileIcon as Tooth, Calendar, Clock, Shield } from "lucide-react"
+import { useAuth } from "@/lib/auth-context/auth-context"
 
-export default function Home() {
+export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const { login } = useAuth()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  setError("")
+  setIsLoading(true)
+
+  try {
+    await login(email, password)
+    router.push("/dashboard")
+    console.log("Redirección exitosa")
+  } catch (err: any) {
+    setError(err.message || "Error al iniciar sesión. Por favor, intenta de nuevo.")
+  } finally {
+    setIsLoading(false)
+  }
+}
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-6 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <Tooth className="h-8 w-8 text-blue-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Clínica Dental TEC</h1>
+    <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4">
+      
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <Tooth className="h-12 w-12 text-blue-600" />
           </div>
-          <div className="space-x-4">
-            <Button variant="outline" asChild>
-              <Link href="/login">Iniciar Sesión</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/register">Registrarse</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-12">
-        <section className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">Gestión de Citas Dentales</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Sistema integral para la gestión de citas en la clínica dental universitaria. Solicita, gestiona y recibe
-            recordatorios de tus citas dentales.
+          <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+          <CardDescription>Accede a tu cuenta para gestionar tus citas dentales</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Correo electrónico</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="tu@ejemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Contraseña</Label>
+                  <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-center">
+          <p className="text-sm text-gray-600">
+            ¿No tienes una cuenta?{" "}
+            <Link href="/register" className="text-blue-600 hover:underline">
+              Regístrate
+            </Link>
           </p>
-        </section>
-
-        <section className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <Card>
-            <CardHeader>
-              <Calendar className="h-10 w-10 text-blue-600 mb-2" />
-              <CardTitle>Agenda tu Cita</CardTitle>
-              <CardDescription>Reserva tu cita dental según tu disponibilidad</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                Selecciona el tipo de atención que necesitas y encuentra el horario que mejor se adapte a tu agenda.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" asChild>
-                <Link href="/register">Comenzar</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Clock className="h-10 w-10 text-blue-600 mb-2" />
-              <CardTitle>Gestión Eficiente</CardTitle>
-              <CardDescription>Administra tus citas fácilmente</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                Recibe recordatorios, reprograma o cancela tus citas con anticipación cuando sea necesario.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" variant="outline" asChild>
-                <Link href="/login">Acceder</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Shield className="h-10 w-10 text-blue-600 mb-2" />
-              <CardTitle>Seguridad Garantizada</CardTitle>
-              <CardDescription>Tus datos están protegidos</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                Sistema seguro con autenticación avanzada y protección de información personal y médica.
-              </p>
-            </CardContent>
-            <CardFooter>
-              <Button className="w-full" variant="outline" asChild>
-                <Link href="/about">Más Información</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        </section>
-      </main>
-
-      <footer className="bg-gray-100 mt-20">
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-gray-600">
-            <p>© {new Date().getFullYear()} Clínica Dental Universitaria. Todos los derechos reservados.</p>
-          </div>
-        </div>
-      </footer>
+        </CardFooter>
+      </Card>
     </div>
   )
 }

@@ -4,7 +4,10 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-context/auth-context"
+
+
+
 import { Sidebar } from "@/components/dashboard/sidebar"
 import { Header } from "@/components/dashboard/header"
 import { Loader2 } from "lucide-react"
@@ -14,7 +17,8 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, isLoading } = useAuth()
+  const {user, isLoading } = useAuth()
+  console.log("user", user)
   const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
@@ -23,7 +27,7 @@ export default function DashboardLayout({
     setIsMounted(true)
 
     if (!isLoading && !user) {
-      router.push("/login")
+      router.push("/")
     }
   }, [user, isLoading, router])
 

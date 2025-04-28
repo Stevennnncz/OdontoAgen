@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, Search } from "lucide-react"
 import Link from "next/link"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-context/auth-context"
 import { AppointmentList } from "@/components/dashboard/appointment-list"
 
 export default function AppointmentsPage() {

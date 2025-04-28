@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-context/auth-context"
 import { AppointmentList } from "@/components/dashboard/appointment-list"
 import { UpcomingAppointments } from "@/components/dashboard/upcoming-appointments"
 import { DocumentUpload } from "@/components/dashboard/document-upload"
@@ -38,7 +38,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Bienvenido, {user?.firstName}</h1>
+        <h1 className="text-3xl font-bold text-black">Bienvenido</h1>
         <p className="text-muted-foreground">Gestiona tus citas y documentos desde este panel de control.</p>
       </div>
 

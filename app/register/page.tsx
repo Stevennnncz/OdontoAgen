@@ -1,5 +1,5 @@
 "use client"
-
+import supabase from "@/lib/supabase-client"
 import type React from "react"
 
 import { useState } from "react"
@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SmileIcon as Tooth } from "lucide-react"
 import Link from "next/link"
-import { useAuth } from "@/lib/auth-context"
+import { useAuth } from "@/lib/auth-context/auth-context"
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -41,24 +41,58 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-
+  
     if (formData.password !== formData.confirmPassword) {
       setError("Las contraseñas no coinciden")
       return
     }
-
+  
     setIsLoading(true)
-
+  
     try {
-      await register(formData)
-      router.push("/dashboard")
-    } catch (err) {
-      setError("Error al registrar. Por favor, intenta de nuevo.")
+      // Verificar si ya existe un usuario con el mismo correo o studentID
+      const { data: existingUsers, error: checkError } = await supabase
+        .from("users") // Reemplaza con el nombre de tu tabla
+        .select("*")
+        .or(`email.eq.${formData.email},student_id.eq.${formData.studentId}`)
+  
+      if (checkError) {
+        throw new Error(checkError.message)
+      }
+  
+      if (existingUsers && existingUsers.length > 0) {
+        setError("Ya existe un usuario con este correo o número de matrícula.")
+        return
+      }
+  
+      // Inserción en la base de datos
+      const { data, error } = await supabase
+        .from("users") // Reemplaza con el nombre de tu tabla
+        .insert([
+          {
+            first_name: formData.firstName, // Reemplaza con los nombres de las columnas en tu tabla
+            last_name: formData.lastName,
+            email: formData.email,
+            password: formData.password, // Asegúrate de manejar contraseñas de forma segura (por ejemplo, usando hashing)
+            student_id: formData.studentId,
+            role: "student",
+          },
+        ])
+  
+      if (error) {
+        throw new Error(error.message)
+      }
+  
+      console.log("Usuario registrado:", data)
+  
+      // Redirigir al login después del registro exitoso
+      router.push("/login")
+    } catch (err: any) {
+      setError(err.message || "Error al registrar. Por favor, intenta de nuevo.")
     } finally {
       setIsLoading(false)
     }
   }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4 py-8">
       <Card className="w-full max-w-md">
@@ -104,19 +138,6 @@ export default function RegisterPage() {
               <div className="space-y-2">
                 <Label htmlFor="studentId">Número de matrícula</Label>
                 <Input id="studentId" name="studentId" value={formData.studentId} onChange={handleChange} required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">Tipo de usuario</Label>
-                <Select value={formData.role} onValueChange={handleRoleChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un rol" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="estudiante">Estudiante</SelectItem>
-                    <SelectItem value="asistente">Asistente</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
 
               <div className="space-y-2">
