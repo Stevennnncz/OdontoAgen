@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import supabase from "@/lib/supabase-client"
 
 export default function UsersPage() {
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+  const [userToDelete, setUserToDelete] = useState<string | null>(null) // Almacena la cédula del usuario a eliminar
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false) // Estado para el modal
@@ -42,6 +44,23 @@ export default function UsersPage() {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
+
+  const handleDeleteUser = async (cedula: string) => {
+    const { error } = await supabase
+      .from("paciente") // Reemplaza "paciente" con el nombre de tu tabla
+      .delete()
+      .eq("cedula", cedula) // Filtra por la cédula del usuario
+  
+    if (error) {
+      console.error("Error al eliminar usuario:", error.message)
+    } else {
+      console.log("Usuario eliminado exitosamente")
+      // Actualiza la lista de usuarios después de eliminar
+      const { data } = await supabase.from("paciente").select("*")
+      setUsers(data || [])
+    }
+  }
+
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,13 +145,30 @@ export default function UsersPage() {
                 <td className="border border-gray-300 px-4 py-2 text-black">{user.nombre} {user.apellido}</td>
                 <td className="border border-gray-300 px-4 py-2 text-black">{user.correo}</td>
                 <td className="border border-gray-300 px-4 py-2 text-black">
-                  <button
-                    onClick={() => console.log("Acción para el usuario:", user)}
-                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                <button
+                  onClick={() => {
+                    setUserToDelete(user.cedula) // Almacena la cédula del usuario
+                    setIsConfirmModalOpen(true) // Abre el modal de confirmación
+                  }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 flex items-center gap-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
                   >
-                    Acción
-                  </button>
-                </td>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a2 2 0 012-2h4a2 2 0 012 2m-6 0h6"
+                    />
+                  </svg>
+                  
+                </button>
+              </td>
               </tr>
             ))}
           </tbody>
@@ -275,6 +311,34 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+      {isConfirmModalOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded shadow-lg w-80">
+      <h2 className="text-xl font-bold mb-4 text-black">Confirmar Eliminación</h2>
+      <p className="text-black mb-4">¿Estás seguro de que deseas eliminar este usuario?</p>
+      <div className="flex justify-end">
+        <button
+          className="bg-gray-300 text-black px-4 py-2 rounded mr-2"
+          onClick={() => setIsConfirmModalOpen(false)} // Cierra el modal
+        >
+          Cancelar
+        </button>
+        <button
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+          onClick={async () => {
+            if (userToDelete) {
+              await handleDeleteUser(userToDelete) // Llama a la función para eliminar el usuario
+              setIsConfirmModalOpen(false) // Cierra el modal
+              setUserToDelete(null) // Limpia el usuario seleccionado
+            }
+          }}
+        >
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   )
 }
