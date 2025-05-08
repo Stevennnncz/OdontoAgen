@@ -74,9 +74,12 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Contraseña</Label>
-                  <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                  <div
+                    onClick={() => router.push("/recover")}
+                    className="text-sm text-blue-600 hover:underline cursor-pointer"
+                  >
                     ¿Olvidaste tu contraseña?
-                  </Link>
+                  </div>
                 </div>
                 <Input
                   id="password"
@@ -92,14 +95,6 @@ export default function LoginPage() {
             </div>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-center">
-          <p className="text-sm text-gray-600">
-            ¿No tienes una cuenta?{" "}
-            <Link href="/register" className="text-blue-600 hover:underline">
-              Regístrate
-            </Link>
-          </p>
-        </CardFooter>
       </Card>
     </div>
   )
