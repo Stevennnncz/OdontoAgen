@@ -20,6 +20,7 @@ export default function NewAppointmentPage() {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [appointmentType, setAppointmentType] = useState("revision")
   const [timeSlot, setTimeSlot] = useState<string>("")
+  const [showTimeSlotError, setShowTimeSlotError] = useState(false)
   const [notes, setNotes] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [patients, setPatients] = useState<{ cedula: number; nombre: string; apellidos: string }[]>([])
@@ -28,9 +29,35 @@ export default function NewAppointmentPage() {
   const [odont, setOdont] = useState<{ cedula: number; nombre: string; apellidos: string }[]>([])
   const [selectedOdont, setSelectedOdont] = useState<number | null>(null)
   const [loadingOdont, setLoadingOdont] = useState(true)
+  const [busySlots, setBusySlots] = useState<string[]>([])
 
 
   useEffect(() => {
+      const fetchBusySlots = async () => {
+        if (!date || !selectedOdont) {
+          setBusySlots([])
+          return
+        }
+        const { data, error } = await supabase
+          .from("citas")
+          .select("hora_inicio, hora_final")
+          .eq("fecha", date.toISOString().split("T")[0])
+          .eq("odontologo", String(selectedOdont))
+          .eq("estado", "Pendiente") // Opcional: solo citas activas
+
+        if (!error && data) {
+          // Convierte "08:00:00" a "08:00"
+          const slots = data.map((cita: any) =>
+            cita.hora_inicio.slice(0, 5)
+          )
+          setBusySlots(slots)
+          console.log("busySlots:", slots)
+          console.log("Busy slots:", busySlots)
+        }
+      }
+    fetchBusySlots()
+    
+
     const fetchPatients = async () => {
       setLoadingPatients(true)
       const { data, error } = await supabase
@@ -49,23 +76,27 @@ export default function NewAppointmentPage() {
       setLoadingOdont(false)
     }
     fetchOdont()
-  }, [])
+  }, [date, selectedOdont])
 
   
 
   // Simulated available time slots
-  const morningSlots = ["8:00", "8:30", "9:00", "9:30", "10:00", "10:30", "11:00","11:30"]
+  const morningSlots = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00","11:30"]
   const afternoonSlots = ["13:00", "13:30", "14:00","14:30"]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!date || !timeSlot) {
+       console.log("Valor de timeSlot:", timeSlot) // <-- Aquí verás el valor en la consola
+    if (!timeSlot)
+       {
+      setShowTimeSlotError(true)
+      console.log("No hay timeslot"),
       toast({
-        title: "Error",
-        description: "Por favor selecciona una fecha y hora para tu cita.",
-        variant: "destructive",
+      title: "Error",
+      description: "Por favor selecciona una hora.",
+      variant: "destructive",
       })
+      
       return
     }
 
@@ -135,6 +166,7 @@ export default function NewAppointmentPage() {
 
 const handleTimeSlotClick = (slot: string) => {
   setTimeSlot(slot)
+  setShowTimeSlotError(false)
 }
 
   return (
@@ -264,13 +296,14 @@ const handleTimeSlotClick = (slot: string) => {
           <Card>
             <CardHeader>
               <CardTitle>Fecha</CardTitle>
-              <CardDescription>Selecciona el día para de la cita</CardDescription>
+              <CardDescription>Selecciona el día de la cita</CardDescription>
             </CardHeader>
             <CardContent>
               <Calendar
                 mode="single"
                 selected={date}
                 onSelect={setDate}
+                required
                 className="rounded-md border"
                 disabled={(date) => {
                   // Disable weekends and past dates
@@ -295,15 +328,26 @@ const handleTimeSlotClick = (slot: string) => {
                     <Button
                       key={slot}
                       type="button"
-                      variant={timeSlot.includes(slot) ? "default" : "outline"}
+                      variant={
+                        busySlots.includes(slot)
+                          ? "secondary" // o "destructive" para rojo
+                          : timeSlot === slot
+                          ? "default"
+                          : "outline"
+                      }
                       onClick={() => handleTimeSlotClick(slot)}
                       className="h-10"
+                      disabled={busySlots.includes(slot)}
                     >
                       {slot}
                     </Button>
+
                     ))}
                   </div>
                 </div>
+                  {showTimeSlotError && (
+                    <p className="text-red-500 text-sm mt-2">Debes seleccionar un horario.</p>
+                  )}
                 <div>
                   <h3 className="font-medium mb-2">Tarde (13:00 - 15:00)</h3>
                   <div className="grid grid-cols-4 gap-2">
@@ -311,15 +355,26 @@ const handleTimeSlotClick = (slot: string) => {
                     <Button
                       key={slot}
                       type="button"
-                      variant={timeSlot.includes(slot) ? "default" : "outline"}
+                      variant={
+                        busySlots.includes(slot)
+                          ? "secondary" // o "destructive" para rojo
+                          : timeSlot === slot
+                          ? "default"
+                          : "outline"
+                      }
                       onClick={() => handleTimeSlotClick(slot)}
                       className="h-10"
+                      disabled={busySlots.includes(slot)}
+                      
                     >
                       {slot}
                     </Button>
                     ))}
                   </div>
                 </div>
+                  {showTimeSlotError && (
+                  <p className="text-red-500 text-sm mt-2">Debes seleccionar un horario.</p>
+                )}
               </div>
             </CardContent>
           </Card>
