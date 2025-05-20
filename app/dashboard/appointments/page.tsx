@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -11,13 +11,33 @@ import Link from "next/link"
 import { useAuth } from "@/lib/auth-context/auth-context"
 import { AppointmentList } from "@/components/dashboard/appointment-list"
 
+import supabase from "@/lib/supabase-client"
+
+
 export default function AppointmentsPage() {
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
   const [filterType, setFilterType] = useState("all")
-
+  const [appointments, setAppointments] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const isAdmin = user?.role === "administrador" || user?.role === "asistente"
+
+useEffect(() => {
+const fetchAppointments = async () => {
+  const { data, error } = await supabase
+    .from("citas")
+    .select(`
+      *,
+      paciente:paciente (nombre, apellidos),
+      odontologo:odontologo (nombre, apellidos)
+    `)
+    console.log("Fetched data:", data)
+  if (!error && data) setAppointments(data)
+}
+  fetchAppointments()
+  
+}, [])
 
   return (
     <div className="space-y-6">
@@ -80,10 +100,11 @@ export default function AppointmentsPage() {
             <TabsList className="mb-4">
               <TabsTrigger value="upcoming">Próximas</TabsTrigger>
               <TabsTrigger value="past">Pasadas</TabsTrigger>
-              {isAdmin && <TabsTrigger value="all">Todas</TabsTrigger>}
+              <TabsTrigger value="all">Todas</TabsTrigger>
             </TabsList>
             <TabsContent value="upcoming">
               <AppointmentList
+                appointments={appointments}
                 filter="upcoming"
                 searchTerm={searchTerm}
                 filterStatus={filterStatus}
@@ -92,6 +113,7 @@ export default function AppointmentsPage() {
             </TabsContent>
             <TabsContent value="past">
               <AppointmentList
+                appointments={appointments}
                 filter="past"
                 searchTerm={searchTerm}
                 filterStatus={filterStatus}
@@ -101,12 +123,14 @@ export default function AppointmentsPage() {
             {isAdmin && (
               <TabsContent value="all">
                 <AppointmentList
+                  appointments={appointments}
                   filter="all"
                   searchTerm={searchTerm}
                   filterStatus={filterStatus}
                   filterType={filterType}
                 />
               </TabsContent>
+              
             )}
           </Tabs>
         </CardContent>
