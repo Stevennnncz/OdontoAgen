@@ -8,9 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/auth-context/auth-context"
 import { AppointmentList } from "@/components/dashboard/appointment-list"
 import { UpcomingAppointments } from "@/components/dashboard/upcoming-appointments"
-import { DocumentUpload } from "@/components/dashboard/document-upload"
 import { CalendarClock, FileCheck, AlertCircle, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
+import ProtectedRoute from "@/lib/auth-context/protected-route"
 
 export default function DashboardPage() {
   const { user } = useAuth()
@@ -33,9 +33,9 @@ export default function DashboardPage() {
     })
   }, [])
 
-  const isStudent = user?.role === "estudiante"
 
   return (
+     <ProtectedRoute>
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-black">Bienvenido</h1>
@@ -121,63 +121,8 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {isStudent && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Documentos</CardTitle>
-            <CardDescription>
-              Sube tu informe de matrícula para validar tu acceso a los servicios dentales
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DocumentUpload />
-          </CardContent>
-        </Card>
-      )}
-
-      {!isStudent && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Gestión de Citas</CardTitle>
-            <CardDescription>
-              Administra las citas pendientes y revisa los documentos de los estudiantes
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="pending">
-              <TabsList className="mb-4">
-                <TabsTrigger value="pending">Citas Pendientes</TabsTrigger>
-                <TabsTrigger value="documents">Documentos por Revisar</TabsTrigger>
-              </TabsList>
-              <TabsContent value="pending">
-                <AppointmentList />
-              </TabsContent>
-              <TabsContent value="documents">
-                <div className="space-y-4">
-                  <div className="rounded-md border p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Ana García</p>
-                        <p className="text-sm text-muted-foreground">Informe de matrícula - 12/05/2023</p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button size="sm" variant="outline">
-                          Ver
-                        </Button>
-                        <Button size="sm" variant="default">
-                          Aprobar
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      )}
     </div>
+        </ProtectedRoute>
   )
 }
 

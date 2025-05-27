@@ -150,6 +150,31 @@ export default function NewAppointmentPage() {
         description: "Tu cita ha sido agendada exitosamente.",
       })
 
+
+  const { data: pacienteData } = await supabase
+    .from("paciente")
+    .select("correo, nombre, apellidos")
+    .eq("cedula", selectedPatient)
+    .single()
+
+  if (pacienteData?.correo) {
+    await fetch("/api/new-appointment-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: pacienteData.correo,
+        nombre: pacienteData.nombre,
+        apellidos: pacienteData.apellidos,
+        fecha: date?.toISOString().split("T")[0],
+        hora_inicio: horaInicio,
+        hora_final: horaFinal,
+        tipo: appointmentType,
+      }),
+    })
+  }
+
+
+
       router.push("/dashboard/appointments")
     } catch (error: any) {
     console.error("Supabase error:", error)

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import supabase from "@/lib/supabase-client"
 import { debug } from "console"
-
+import { PencilSquareIcon, TrashIcon,EyeIcon } from "@heroicons/react/24/outline"
+import ProtectedRoute from "@/lib/auth-context/protected-route"
 export default function UsersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [patientToEdit, setPatientToEdit] = useState<any>(null) // Almacena los datos del paciente a editar
@@ -11,7 +12,17 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<string | null>(null) // Almacena la cédula del usuario a eliminar
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [isViewAppointmentsOpen, setIsViewAppointmentsOpen] = useState(false)
+  const [appointments, setAppointments] = useState<any[]>([])
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false) // Estado para el modal
+  const [searchTerm, setSearchTerm] = useState("")
+  const filteredUsers = users.filter(
+    (user) =>
+      user.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.cedula.toLowerCase().includes(searchTerm.toLowerCase())
+  )
   const [formData, setFormData] = useState({
     cedula: "",
     nombre: "",
@@ -47,6 +58,25 @@ export default function UsersPage() {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
+
+
+  const handleViewAppointments = async (user: any) => {
+  setPatientToEdit(user)
+  setIsViewAppointmentsOpen(true)
+  setAppointmentsLoading(true)
+  // Ajusta el nombre de la columna según tu base de datos (ej: paciente, paciente_id, etc.)
+  const { data, error } = await supabase
+    .from("citas")
+    .select(`
+      id, fecha, hora_inicio, hora_final, tipo, estado, notas,
+      odontologo:odontologo (nombre, apellidos)
+    `)
+    .eq("paciente", user.cedula)
+    .order("fecha", { ascending: false })
+
+  if (!error && data) setAppointments(data)
+  setAppointmentsLoading(false)
+}
 
   const handleDeleteUser = async (cedula: string) => {
     const { error } = await supabase
@@ -188,101 +218,152 @@ export default function UsersPage() {
     }
   }
   return (
+    <ProtectedRoute>
     <div>
       <div className="flex items-center">
-  <h1 className="text-2xl font-bold text-black">Gestión de Usuarios</h1>
+  <h1 className="text-2xl font-bold text-black">Gestión de Pacientes</h1>
   <button
     className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-500 ml-4"
     onClick={() => setIsModalOpen(true)} // Abre el modal
   >
     +
   </button>
+    </div>
+    <div className="mt-4 flex items-center">
+  <input
+    type="text"
+    placeholder="Buscar por nombre, apellidos o cédula..."
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md shadow-sm text-black bg-gray-100"
+  />
+
+
+  
 </div>
+
       <br />
       {loading ? (
         <p className="text-black">Cargando usuarios...</p>
       ) : (
-        <table className="min-w-full border-collapse border border-gray-200 mt-4">
-          <thead>
+
+<table className="min-w-full mt-2 rounded-lg overflow-hidden shadow border border-gray-200 bg-white">
+  <thead className="bg-blue-100">
+    <tr>
+      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Cédula</th>
+      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Nombre</th>
+      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Correo</th>
+      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Carnet</th>
+      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Carrera</th>
+      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Beca</th>
+      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Informe</th>
+      <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Opciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {filteredUsers.map((user, idx) => (
+      <tr
+        key={user.cedula}
+        className={idx % 2 === 0 ? "bg-white hover:bg-blue-50" : "bg-gray-50 hover:bg-blue-50"}
+      >
+        <td className="px-4 py-2 border-b border-gray-200 text-gray-900">{user.cedula}</td>
+        <td className="px-4 py-2 border-b border-gray-200 text-gray-900">{user.nombre} {user.apellidos}</td>
+        <td className="px-4 py-2 border-b border-gray-200 text-gray-900">{user.correo}</td>
+        <td className="px-4 py-2 border-b border-gray-200 text-gray-900">{user.carnet}</td>
+        <td className="px-4 py-2 border-b border-gray-200 text-gray-900">{user.carrera}</td>
+        <td className="px-4 py-2 border-b border-gray-200 text-gray-900">{user.beca ? "Sí" : "No"}</td>
+        <td className="px-4 py-2 border-b border-gray-200 text-gray-900">{user.informe ? "Sí" : "No"}</td>
+
+<td className="px-4 py-2 border-b border-gray-200">
+  <div className="flex items-center gap-2">
+    <button
+      className="p-2 rounded hover:bg-blue-100"
+      title="Editar"
+      onClick={() => {
+        setPatientToEdit(user)
+        setIsEditModalOpen(true)
+      }}
+    >
+      <PencilSquareIcon className="h-5 w-5 text-blue-600" />
+      {/* Si usas Lucide: <Pencil className="h-5 w-5 text-blue-600" /> */}
+    </button>
+    <button
+      className="p-2 rounded hover:bg-red-100"
+      title="Eliminar"
+      onClick={() => {
+        setUserToDelete(user.cedula)
+        setIsConfirmModalOpen(true)
+      }}
+    >
+      <TrashIcon className="h-5 w-5 text-red-600" />
+    </button>
+    <button
+      className="p-2 rounded hover:bg-green-100"
+      title="Ver citas"
+      onClick={() => handleViewAppointments(user)}
+    >
+      <EyeIcon className="h-5 w-5 text-green-600" />
+    </button>
+  </div>
+</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+      )}
+
+      {/* Modal */}
+      {isViewAppointmentsOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <h2 className="text-xl font-bold mb-4 text-black">
+        Citas de {patientToEdit?.nombre} {patientToEdit?.apellidos}
+      </h2>
+      {appointmentsLoading ? (
+        <p className="text-black">Cargando citas...</p>
+      ) : appointments.length === 0 ? (
+        <p className="text-black">No hay citas registradas para este paciente.</p>
+      ) : (
+        <table className="min-w-full rounded-lg overflow-hidden border border-gray-200 bg-white text-black text-sm">
+          <thead className="bg-blue-100">
             <tr>
-              <th className="border border-gray-300 px-2 py-1 text-black">Cedula</th>
-              <th className="border border-gray-300 px-2 py-1 text-black">Nombre</th>
-              <th className="border border-gray-300 px-2 py-1 text-black">Correo</th>
-              <th className="border border-gray-300 px-2 py-1 text-black">Carnet</th>
-              <th className="border border-gray-300 px-2 py-1 text-black">Carrera</th>
-              <th className="border border-gray-300 px-2 py-1 text-black">Beca</th>
-              <th className="border border-gray-300 px-2 py-1 text-black">Informe</th>
-              <th className="border border-gray-300 px-2 py-1 text-black">Opciones</th>
+              <th className="px-3 py-2 text-left">Fecha</th>
+              <th className="px-3 py-2 text-left">Hora</th>
+              <th className="px-3 py-2 text-left">Tipo</th>
+              <th className="px-3 py-2 text-left">Estado</th>
+              <th className="px-3 py-2 text-left">Odontólogo</th>
+              <th className="px-3 py-2 text-left">Notas</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user.cedula}>
-                <td className="border border-gray-300  px-1 py-2 text-black">{user.cedula}</td>
-                <td className="border border-gray-300 px-1 py-2 text-black">{user.nombre} {user.apellidos}</td>
-                <td className="border border-gray-300 px-1 py-2 text-black">{user.correo}</td>
-                <td className="border border-gray-300 px-1 py-2 text-black">{user.carnet}</td>
-                <td className="border border-gray-300 px-1 py-2 text-black">{user.carrera}</td>
-                <td className="border border-gray-300 px-1 py-2 text-black">{user.beca ? "Si" : "No"}</td>
-                <td className="border border-gray-300 px-1 py-2 text-black">{user.informe ? "Sí" : "No"}</td>
-                <td className="border border-gray-300 px-1 py-2 text-black">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setPatientToEdit(user) // Almacena los datos del paciente a editar
-                      setIsEditModalOpen(true) // Abre el modal de edición
-                    }}
-                    className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 flex items-center gap-2"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15.232 5.232l3.536 3.536M9 11l6.536-6.536a2 2 0 112.828 2.828L11.828 13.828a2 2 0 01-.707.464l-4 1a1 1 0 01-1.265-1.265l1-4a2 2 0 01.464-.707z"
-                      />
-                    </svg>
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => {
-                      setUserToDelete(user.cedula) // Almacena la cédula del usuario
-                      setIsConfirmModalOpen(true) // Abre el modal de confirmación
-                    }}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 flex items-center gap-2"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0a2 2 0 012-2h4a2 2 0 012 2m-6 0h6"
-                      />
-                    </svg>
-                    Eliminar
-                  </button>
-                </div>
-              </td>
-                            
+            {appointments.map((cita) => (
+              <tr key={cita.id} className="border-b">
+                <td className="px-3 py-2">{cita.fecha}</td>
+                <td className="px-3 py-2">{cita.hora_inicio} - {cita.hora_final}</td>
+                <td className="px-3 py-2 capitalize">{cita.tipo}</td>
+                <td className="px-3 py-2">{cita.estado}</td>
+                <td className="px-3 py-2">
+                  {cita.odontologo
+                    ? `${cita.odontologo.nombre} ${cita.odontologo.apellidos}`
+                    : "Desconocido"}
+                </td>
+                <td className="px-3 py-2">{cita.notas || "Sin notas"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
-
-      {/* Modal */}
+      <div className="flex justify-end mt-4">
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          onClick={() => setIsViewAppointmentsOpen(false)}
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded shadow-lg w-50 max-h-[90vh] overflow-y-auto">
@@ -583,5 +664,6 @@ export default function UsersPage() {
   </div>
 )}
     </div>
+  </ProtectedRoute>
   )
 }

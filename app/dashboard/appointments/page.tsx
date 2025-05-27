@@ -10,7 +10,7 @@ import { Calendar, Search } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context/auth-context"
 import { AppointmentList } from "@/components/dashboard/appointment-list"
-
+import ProtectedRoute from "@/lib/auth-context/protected-route"
 import supabase from "@/lib/supabase-client"
 
 
@@ -22,6 +22,15 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const isAdmin = user?.role === "administrador" || user?.role === "asistente"
+
+
+const handleStatusChange = (id: number, newStatus: string) => {
+  setAppointments((prev) =>
+    prev.map((app) =>
+      app.id === id ? { ...app, estado: newStatus } : app
+    )
+  )
+}
 
 useEffect(() => {
 const fetchAppointments = async () => {
@@ -36,10 +45,14 @@ const fetchAppointments = async () => {
   if (!error && data) setAppointments(data)
 }
   fetchAppointments()
-  
+
+
+
+
 }, [])
 
   return (
+    <ProtectedRoute>
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -77,9 +90,9 @@ const fetchAppointments = async () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="pending">Pendiente</SelectItem>
-                  <SelectItem value="completed">Completada</SelectItem>
-                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                  <SelectItem value="Pendiente">Pendiente</SelectItem>
+                  <SelectItem value="Completada">Completada</SelectItem>
+                  <SelectItem value="Cancelada">Cancelada</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterType} onValueChange={setFilterType}>
@@ -109,6 +122,7 @@ const fetchAppointments = async () => {
                 searchTerm={searchTerm}
                 filterStatus={filterStatus}
                 filterType={filterType}
+                onStatusChange={handleStatusChange}
               />
             </TabsContent>
             <TabsContent value="past">
@@ -118,9 +132,10 @@ const fetchAppointments = async () => {
                 searchTerm={searchTerm}
                 filterStatus={filterStatus}
                 filterType={filterType}
+                onStatusChange={handleStatusChange}
               />
             </TabsContent>
-            {isAdmin && (
+            
               <TabsContent value="all">
                 <AppointmentList
                   appointments={appointments}
@@ -128,14 +143,14 @@ const fetchAppointments = async () => {
                   searchTerm={searchTerm}
                   filterStatus={filterStatus}
                   filterType={filterType}
+                  onStatusChange={handleStatusChange}
                 />
               </TabsContent>
-              
-            )}
           </Tabs>
         </CardContent>
       </Card>
     </div>
+  </ProtectedRoute>
   )
 }
 
