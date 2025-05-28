@@ -21,7 +21,7 @@ export default function AppointmentsPage() {
   const [filterType, setFilterType] = useState("all")
   const [appointments, setAppointments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const isAdmin = user?.role === "administrador" || user?.role === "asistente"
+  const [dateFilter, setDateFilter] = useState<"today" | "month" | "all">("all")
 
 
 const handleStatusChange = (id: number, newStatus: string) => {
@@ -50,6 +50,28 @@ const fetchAppointments = async () => {
 
 
 }, [])
+
+const today = new Date()
+const filteredAppointments = appointments.filter(app => {
+  if (!app.fecha) return false
+  const [year, month, day] = String(app.fecha).split('-')
+  const appDate = new Date(Number(year), Number(month) - 1, Number(day))
+
+  if (dateFilter === "today") {
+    return (
+      appDate.getFullYear() === today.getFullYear() &&
+      appDate.getMonth() === today.getMonth() &&
+      appDate.getDate() === today.getDate()
+    )
+  }
+  if (dateFilter === "month") {
+    return (
+      appDate.getFullYear() === today.getFullYear() &&
+      appDate.getMonth() === today.getMonth()
+    )
+  }
+  return true // "all"
+})
 
   return (
     <ProtectedRoute>
@@ -109,6 +131,26 @@ const fetchAppointments = async () => {
             </div>
           </div>
 
+          <div className="flex gap-2 mb-4">
+            <Tabs value={dateFilter} onValueChange={(val) => setDateFilter(val as typeof dateFilter)}>
+              <TabsList className="flex-1">
+                <TabsTrigger value="today">
+                  Hoy
+                </TabsTrigger>
+                <TabsTrigger value="week">
+                  Esta semana
+                </TabsTrigger>
+                <TabsTrigger value="month">
+                  Este mes
+                </TabsTrigger>
+                <TabsTrigger value="all">
+                  Todas
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          
+
           <Tabs defaultValue="upcoming">
             <TabsList className="mb-4">
               <TabsTrigger value="upcoming">Próximas</TabsTrigger>
@@ -117,7 +159,7 @@ const fetchAppointments = async () => {
             </TabsList>
             <TabsContent value="upcoming">
               <AppointmentList
-                appointments={appointments}
+                appointments={filteredAppointments}
                 filter="upcoming"
                 searchTerm={searchTerm}
                 filterStatus={filterStatus}
@@ -127,7 +169,7 @@ const fetchAppointments = async () => {
             </TabsContent>
             <TabsContent value="past">
               <AppointmentList
-                appointments={appointments}
+                appointments={filteredAppointments}
                 filter="past"
                 searchTerm={searchTerm}
                 filterStatus={filterStatus}
@@ -138,7 +180,7 @@ const fetchAppointments = async () => {
             
               <TabsContent value="all">
                 <AppointmentList
-                  appointments={appointments}
+                  appointments={filteredAppointments}
                   filter="all"
                   searchTerm={searchTerm}
                   filterStatus={filterStatus}

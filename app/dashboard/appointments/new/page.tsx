@@ -30,6 +30,7 @@ export default function NewAppointmentPage() {
   const [selectedOdont, setSelectedOdont] = useState<number | null>(null)
   const [loadingOdont, setLoadingOdont] = useState(true)
   const [busySlots, setBusySlots] = useState<string[]>([])
+  const [dateFilter, setDateFilter] = useState<"today" | "month" | "all">("all")
 
 
   useEffect(() => {

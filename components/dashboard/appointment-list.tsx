@@ -45,9 +45,17 @@ export function AppointmentList({
 
   const filteredAppointments = appointments.filter((app) => {
     const searchMatch =
-      searchTerm === "" ||
-      (app.paciente && app.paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      app.odontologo?.nombre.toLowerCase().includes(searchTerm.toLowerCase())
+        searchTerm === "" ||
+  (app.paciente && (
+    app.paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.paciente.apellidos?.toLowerCase().includes(searchTerm.toLowerCase())
+  )) ||
+  (app.odontologo && (
+    app.odontologo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    app.odontologo.apellidos?.toLowerCase().includes(searchTerm.toLowerCase())
+  )) ||
+  app.fecha?.includes(searchTerm) ||
+  app.id?.toString().includes(searchTerm)
 
     const statusMatch = filterStatus === "all" || app.estado === filterStatus
     const typeMatch = filterType === "all" || app.tipo === filterType
