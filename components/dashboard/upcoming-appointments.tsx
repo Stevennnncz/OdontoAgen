@@ -166,14 +166,14 @@ useEffect(() => {
                 {appointment.tipo === "urgent" && <AlertCircle className="h-3 w-3 mr-1" />}
                 {typeInfo.label}
               </Badge>
-              {appointment.estado !== "Cancelada" && (
+              {/*appointment.estado !== "Cancelada" && (
               <Button
                 size="sm"
                 onClick={() => handleCancel(appointment.id)}
                 className="flex items-center gap-2">
                 <span className="font-semibold">Cancelar</span>
               </Button>
-            )}
+            )}*/}
             </div>
           </div>
         )

@@ -16,20 +16,33 @@ import supabase from "@/lib/supabase-client"
 export default function DashboardPage() {
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([])
   const [date, setDate] = useState<Date | undefined>(new Date())
-  const [stats, setStats] = useState({
-    upcoming: 0,
-    completed: 0,
-    urgent: 0,
-  })
+  const [todayCount, setTodayCount] = useState(0)
+  const [completedCount, setCompletedCount] = useState(0)
 
   // Simulated data - would come from API in real implementation
   useEffect(() => {
-    // Fetch stats from API
-    setStats({
-      upcoming: 2,
-      completed: 5,
-      urgent: 0,
-    })
+    const fetchTodayCounts = async () => {
+      const today = new Date().toISOString().split("T")[0]
+
+      // Citas pendientes
+      const { count: pendingCount } = await supabase
+        .from("citas")
+        .select("*", { count: "exact", head: true })
+        .eq("fecha", today)
+        .eq("estado", "Pendiente")
+
+      setTodayCount(typeof pendingCount === "number" ? pendingCount : 0)
+
+      // Citas completadas
+      const { count: completedCount } = await supabase
+        .from("citas")
+        .select("*", { count: "exact", head: true })
+        .eq("fecha", today)
+        .eq("estado", "Completada")
+
+      setCompletedCount(typeof completedCount === "number" ? completedCount : 0)
+    }
+    fetchTodayCounts()
   }, [])
 
 
@@ -47,9 +60,9 @@ export default function DashboardPage() {
             <CalendarClock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.upcoming}</div>
+            <div className="text-2xl font-bold">{todayCount}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.upcoming === 1 ? "Cita pendiente" : "Citas pendientes"}
+              {todayCount === 1 ? "Cita pendiente hoy" : "Citas pendientes hoy"}
             </p>
           </CardContent>
         </Card>
@@ -59,26 +72,16 @@ export default function DashboardPage() {
             <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.completed}</div>
-            <p className="text-xs text-muted-foreground">En los últimos 6 meses</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Urgencias</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.urgent}</div>
+            <div className="text-2xl font-bold">{completedCount}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.urgent === 0 ? "No hay citas urgentes" : "Citas urgentes pendientes"}
+              {completedCount === 1 ? "Cita completada hoy" : "Citas completadas hoy"}
             </p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+        <Card className="col-span-4 self-start" >
           <CardHeader>
             <CardTitle>Tus Próximas Citas</CardTitle>
             <CardDescription>Visualiza y gestiona tus próximas citas dentales</CardDescription>
