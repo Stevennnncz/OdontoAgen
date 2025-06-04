@@ -91,14 +91,18 @@ export default function DoctorsPage() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateCedula(formData.cedula)) {
-      return
-    }
+    if (!validateCedula(formData.cedula)) {return}
+    if (!validateTelefono(formData.telefono)) {return}
 
     const isDuplicate = await checkDuplicate(formData.cedula)
     if (isDuplicate) {
       alert("La cédula ya existe en la base de datos.")
       return
+    }
+    const isDuplicatePhone = await checkDuplicateTelefono(formData.telefono)
+    if (isDuplicatePhone) {
+        alert("El teléfono ya existe en la base de datos.")
+        return
     }
 
     const { error } = await supabase.from("odontologo").insert([formData])
@@ -121,7 +125,28 @@ export default function DoctorsPage() {
       setDoctors(data || [])
     }
   }
+  const checkDuplicateTelefono = async (
+  telefono: string,
+  excludeTelefono?: string
+): Promise<boolean> => {
+  let query = supabase
+    .from("odontologo")
+    .select("telefono")
+    .eq("telefono", telefono)
 
+  if (excludeTelefono) {
+    query = query.not("telefono", "eq", excludeTelefono)
+  }
+
+  const { data: existingPhones, error } = await query
+
+  if (error) {
+    console.error("Error al verificar duplicados de teléfono:", error.message)
+    return false
+  }
+
+  return existingPhones && existingPhones.length > 0
+}
   const checkDuplicate = async (
     cedula: string,
     excludeCedula?: string
@@ -152,14 +177,26 @@ export default function DoctorsPage() {
     }
     return true
   }
+  function validateTelefono(telefono: string): boolean {
+  if (telefono.length !== 8) {
+    alert("El teléfono debe tener exactamente 8 dígitos.")
+    return false
+  }
+  return true
+}
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!doctorToEdit) return
 
-    if (!validateCedula(doctorToEdit.cedula)) {
-      return
+    if (!validateCedula(doctorToEdit.cedula)) {return}
+    if (!validateTelefono(doctorToEdit.telefono)) {return}
+
+    const isDuplicatePhone = await checkDuplicateTelefono(formData.telefono)
+        if (isDuplicatePhone) {
+        alert("El teléfono ya existe en la base de datos.")
+        return
     }
 
     const isDuplicate = await checkDuplicate(
@@ -217,7 +254,7 @@ export default function DoctorsPage() {
               <tr>
                 <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Cédula</th>
                 <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Nombre</th>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase ">Correo</th>
+                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Correo</th>
                 <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Teléfono</th>
                 <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Opciones</th>
               </tr>

@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, AlertCircle } from "lucide-react"
+import { Calendar, Clock, AlertCircle, X} from "lucide-react"
 import Link from "next/link"
 import supabase from "@/lib/supabase-client"
+import { useToast } from "@/components/ui/use-toast"
 
 interface Appointment {
   id: number
@@ -13,14 +14,40 @@ interface Appointment {
   hora_inicio: string
   tipo: "urgent" | "revision" | "treatment" | string
   odontologo?: { nombre: string; apellidos: string } | null
-  paciente?: { nombre: string; apellidos: string } | null 
+  paciente?: { nombre: string; apellidos: string } | null
+  estado?: string // <-- agrega esta línea
 }
 
 export function UpcomingAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
 
-useEffect(() => {
+    const handleCancel = async (id: number) => {
+    const { error } = await supabase
+      .from("citas")
+      .update({ estado: "Cancelada" })
+      .eq("id", id)
+    if (!error) {
+      setAppointments((prev) =>
+        prev.map((app) =>
+          app.id === id ? { ...app, estado: "Cancelada" } : app
+        )
+      )
+      toast({
+        title: "Cita cancelada",
+        description: "La cita ha sido cancelada exitosamente.",
+      })
+        fetchUpcoming() 
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo cancelar la cita.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const fetchUpcoming = async () => {
     const today = new Date().toISOString().split("T")[0]
     const { data, error } = await supabase
@@ -48,8 +75,8 @@ useEffect(() => {
             ? item.odontologo[0] || null
             : item.odontologo || null,
           paciente: Array.isArray(item.paciente)
-      ? item.paciente[0] || null
-      : item.paciente || null,
+            ? item.paciente[0] || null
+            : item.paciente || null,
         }))
       setAppointments(normalized)
     } else {
@@ -57,6 +84,9 @@ useEffect(() => {
     }
     setLoading(false)
   }
+
+useEffect(() => {
+  setLoading(true)
   fetchUpcoming()
 }, [])
 
@@ -136,16 +166,20 @@ useEffect(() => {
                 {appointment.tipo === "urgent" && <AlertCircle className="h-3 w-3 mr-1" />}
                 {typeInfo.label}
               </Badge>
-              <Button size="sm" variant="outline" asChild>
-                <Link href={`/dashboard/appointments/${appointment.id}`}>Ver detalles</Link>
+              {appointment.estado !== "Cancelada" && (
+              <Button
+                size="sm"
+                onClick={() => handleCancel(appointment.id)}
+                className="flex items-center gap-2">
+                <span className="font-semibold">Cancelar</span>
               </Button>
+            )}
             </div>
           </div>
         )
       })}
       <div className="flex justify-end">
         <Button asChild variant="link">
-          <Link href="/dashboard/appointments">Ver todas las citas</Link>
         </Button>
       </div>
     </div>

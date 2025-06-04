@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
+import CalendarAppointments from "@/components/ui/calendar-appointments"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/lib/auth-context/auth-context"
 import { AppointmentList } from "@/components/dashboard/appointment-list"
@@ -39,7 +40,6 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold text-black">Bienvenido</h1>
         <p className="text-muted-foreground">Gestiona tus citas desde este panel de control.</p>
       </div>
-
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -92,15 +92,15 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3">
+        <Card className="col-span-3 self-start">
           <CardHeader>
             <CardTitle>Calendario</CardTitle>
             <CardDescription>Selecciona una fecha para ver o agendar citas</CardDescription>
           </CardHeader>
           <CardContent>
-            <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md border" />
-            <div className="mt-4">
-              <Button className="w-full" asChild>
+            <CalendarAppointments   />
+            <div className="mt-10 mb-5">
+              <Button className="w-full" asChild >
                 <Link href="/dashboard/appointments/new">Agendar Nueva Cita</Link>
               </Button>
             </div>
