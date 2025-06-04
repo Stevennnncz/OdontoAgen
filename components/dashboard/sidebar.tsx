@@ -11,15 +11,14 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useAuth } from "@/lib/auth-context/auth-context"
 import { cn } from "@/lib/utils"
 import {
-  SmileIcon as Tooth,
+  Activity as Icon,
   Calendar,
-  ClipboardList,
-  FileText,
   Settings,
   Users,
   BarChart3,
   Menu,
   LogOut,
+  Hospital,
 } from "lucide-react"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
@@ -43,16 +42,10 @@ export function Sidebar({ className }: SidebarProps) {
       active: pathname === "/dashboard/appointments" || pathname.startsWith("/dashboard/appointments/"),
     },
     {
-      label: "Documentos",
-      icon: FileText,
-      href: "/dashboard/documents",
-      active: pathname === "/dashboard/documents",
-    },
-    {
-      label: "Historial Clínico",
-      icon: ClipboardList,
-      href: "/dashboard/records",
-      active: pathname === "/dashboard/records",
+      label: "Odontólogos",
+      icon: Hospital,
+      href: "/dashboard/doctors",
+      active: pathname === "/dashboard/doctors",
     },
     {
       label: "Pacientes",
@@ -70,10 +63,10 @@ export function Sidebar({ className }: SidebarProps) {
 
   const SidebarContent = (
     <div className={cn("flex h-full flex-col", className)}>
-      <div className="flex h-14 items-center border-b px-4">
+      <div className="flex h-16 items-center border-b px-4">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+        <Icon className="h-6 w-6 text-black" />
         <span className="text-black">Clínica Dental</span>
-        <Tooth className="h-6 w-6 text-black" />
         </Link>
       </div>
       <ScrollArea className="flex-1 py-4">

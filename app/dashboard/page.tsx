@@ -11,14 +11,13 @@ import { UpcomingAppointments } from "@/components/dashboard/upcoming-appointmen
 import { CalendarClock, FileCheck, AlertCircle, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import ProtectedRoute from "@/lib/auth-context/protected-route"
-
+import supabase from "@/lib/supabase-client"
 export default function DashboardPage() {
-  const { user } = useAuth()
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([])
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [stats, setStats] = useState({
     upcoming: 0,
     completed: 0,
-    documents: 0,
     urgent: 0,
   })
 
@@ -28,7 +27,6 @@ export default function DashboardPage() {
     setStats({
       upcoming: 2,
       completed: 5,
-      documents: 1,
       urgent: 0,
     })
   }, [])
@@ -39,7 +37,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-black">Bienvenido</h1>
-        <p className="text-muted-foreground">Gestiona tus citas y documentos desde este panel de control.</p>
+        <p className="text-muted-foreground">Gestiona tus citas desde este panel de control.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -63,18 +61,6 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.completed}</div>
             <p className="text-xs text-muted-foreground">En los últimos 6 meses</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Documentos</CardTitle>
-            <FileCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.documents}</div>
-            <p className="text-xs text-muted-foreground">
-              {stats.documents === 1 ? "Documento pendiente de revisión" : "Documentos pendientes de revisión"}
-            </p>
           </CardContent>
         </Card>
         <Card>

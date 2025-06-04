@@ -5,44 +5,60 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import supabase from "@/lib/supabase-client"
 
 interface Appointment {
-  id: string
-  date: string
-  time: string
-  type: "urgent" | "revision" | "treatment"
-  doctorName: string
+  id: number
+  fecha: string
+  hora_inicio: string
+  tipo: "urgent" | "revision" | "treatment" | string
+  odontologo?: { nombre: string; apellidos: string } | null
+  paciente?: { nombre: string; apellidos: string } | null 
 }
 
 export function UpcomingAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Simulated data - would come from API in real implementation
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockAppointments: Appointment[] = [
-        {
-          id: "1",
-          date: "2023-06-15",
-          time: "10:00",
-          type: "revision",
-          doctorName: "Dr. Martínez",
-        },
-        {
-          id: "2",
-          date: "2023-06-20",
-          time: "14:30",
-          type: "treatment",
-          doctorName: "Dra. Rodríguez",
-        },
-      ]
+useEffect(() => {
+  const fetchUpcoming = async () => {
+    const today = new Date().toISOString().split("T")[0]
+    const { data, error } = await supabase
+      .from("citas")
+      .select(`
+        id,
+        fecha,
+        hora_inicio,
+        tipo,
+        paciente:paciente (nombre, apellidos),
+        odontologo:odontologo (nombre, apellidos)
+      `)
+      .gte("fecha", today)
+      .eq("estado", "Pendiente")
+      .order("fecha", { ascending: true })
+      .order("hora_inicio", { ascending: true })
 
-      setAppointments(mockAppointments)
-      setLoading(false)
-    }, 1000)
-  }, [])
+    if (!error && data) {
+      const normalized = data
+        .filter((item: any) => !!item.fecha)
+        .slice(0, 3)
+        .map((item: any) => ({
+          ...item,
+          odontologo: Array.isArray(item.odontologo)
+            ? item.odontologo[0] || null
+            : item.odontologo || null,
+          paciente: Array.isArray(item.paciente)
+      ? item.paciente[0] || null
+      : item.paciente || null,
+        }))
+      setAppointments(normalized)
+    } else {
+      setAppointments([])
+    }
+    setLoading(false)
+  }
+  fetchUpcoming()
+}, [])
 
   const getAppointmentTypeLabel = (type: string) => {
     switch (type) {
@@ -79,8 +95,7 @@ export function UpcomingAppointments() {
   return (
     <div className="space-y-4">
       {appointments.map((appointment) => {
-        const typeInfo = getAppointmentTypeLabel(appointment.type)
-
+        const typeInfo = getAppointmentTypeLabel(appointment.tipo)
         return (
           <div
             key={appointment.id}
@@ -90,7 +105,7 @@ export function UpcomingAppointments() {
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span>
-                  {new Date(appointment.date).toLocaleDateString("es-ES", {
+                  {new Date(appointment.fecha).toLocaleDateString("es-ES", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
@@ -99,15 +114,26 @@ export function UpcomingAppointments() {
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
-                <span>{appointment.time}</span>
+                <span>{appointment.hora_inicio}</span>
               </div>
               <div className="text-sm">
-                Doctor: <span className="font-medium">{appointment.doctorName}</span>
+                Doctor: <span className="font-medium">
+                  {appointment.odontologo
+                    ? `${appointment.odontologo.nombre} ${appointment.odontologo.apellidos}`
+                    : "Sin asignar"}
+                </span>
+              </div>
+              <div className="text-sm">
+                Paciente: <span className="font-medium">
+                  {appointment.paciente
+                    ? `${appointment.paciente.nombre} ${appointment.paciente.apellidos}`
+                    : "Sin asignar"}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={typeInfo.variant}>
-                {appointment.type === "urgent" && <AlertCircle className="h-3 w-3 mr-1" />}
+                {appointment.tipo === "urgent" && <AlertCircle className="h-3 w-3 mr-1" />}
                 {typeInfo.label}
               </Badge>
               <Button size="sm" variant="outline" asChild>
@@ -117,7 +143,11 @@ export function UpcomingAppointments() {
           </div>
         )
       })}
+      <div className="flex justify-end">
+        <Button asChild variant="link">
+          <Link href="/dashboard/appointments">Ver todas las citas</Link>
+        </Button>
+      </div>
     </div>
   )
 }
-
