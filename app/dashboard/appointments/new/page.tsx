@@ -2,7 +2,7 @@
 
 import type React from "react"
 import supabase from "@/lib/supabase-client"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,9 +12,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context/auth-context"
-import { CalendarClock,AlertCircle, ShieldCheck, Stethoscope } from "lucide-react"
+import { CalendarClock, AlertCircle, ShieldCheck, Stethoscope } from "lucide-react"
+
+
+
 
 export default function NewAppointmentPage() {
+  const topRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { toast } = useToast()
   const [date, setDate] = useState<Date | undefined>(new Date())
@@ -23,7 +27,7 @@ export default function NewAppointmentPage() {
   const [showTimeSlotError, setShowTimeSlotError] = useState(false)
   const [notes, setNotes] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [patients, setPatients] = useState<{ cedula: number; nombre: string; apellidos: string }[]>([])
+  const [patients, setPatients] = useState<{ cedula: number; nombre: string; apellidos: string; informe?: boolean }[]>([])
   const [selectedPatient, setSelectedPatient] = useState<number | null>(null)
   const [loadingPatients, setLoadingPatients] = useState(true)
   const [odont, setOdont] = useState<{ cedula: number; nombre: string; apellidos: string }[]>([])
@@ -31,44 +35,45 @@ export default function NewAppointmentPage() {
   const [loadingOdont, setLoadingOdont] = useState(true)
   const [busySlots, setBusySlots] = useState<string[]>([])
   const [dateFilter, setDateFilter] = useState<"today" | "month" | "all">("all")
+  const [formError, setFormError] = useState<string | null>(null)
 
 
   useEffect(() => {
-      const fetchBusySlots = async () => {
-        if (!date || !selectedOdont) {
-          setBusySlots([])
-          return
-        }
-        const { data, error } = await supabase
-          .from("citas")
-          .select("hora_inicio, hora_final")
-          .eq("fecha", date.toISOString().split("T")[0])
-          .eq("odontologo", String(selectedOdont))
-          .eq("estado", "Pendiente") // Opcional: solo citas activas
-
-        if (!error && data) {
-          // Convierte "08:00:00" a "08:00"
-          const slots = data.map((cita: any) =>
-            cita.hora_inicio.slice(0, 5)
-          )
-          setBusySlots(slots)
-          console.log("busySlots:", slots)
-          console.log("Busy slots:", busySlots)
-        }
+    const fetchBusySlots = async () => {
+      if (!date || !selectedOdont) {
+        setBusySlots([])
+        return
       }
+      const { data, error } = await supabase
+        .from("citas")
+        .select("hora_inicio, hora_final")
+        .eq("fecha", date.toISOString().split("T")[0])
+        .eq("odontologo", String(selectedOdont))
+        .eq("estado", "Pendiente") // Opcional: solo citas activas
+
+      if (!error && data) {
+        // Convierte "08:00:00" a "08:00"
+        const slots = data.map((cita: any) =>
+          cita.hora_inicio.slice(0, 5)
+        )
+        setBusySlots(slots)
+        console.log("busySlots:", slots)
+        console.log("Busy slots:", busySlots)
+      }
+    }
     fetchBusySlots()
-    
+
 
     const fetchPatients = async () => {
       setLoadingPatients(true)
       const { data, error } = await supabase
         .from("paciente")
-        .select("cedula, nombre, apellidos")
+        .select("cedula, nombre, apellidos, informe")
       if (!error && data) setPatients(data)
       setLoadingPatients(false)
     }
     fetchPatients()
-        const fetchOdont = async () => {
+    const fetchOdont = async () => {
       setLoadingOdont(true)
       const { data, error } = await supabase
         .from("odontologo")
@@ -79,25 +84,37 @@ export default function NewAppointmentPage() {
     fetchOdont()
   }, [date, selectedOdont])
 
-  
+
 
   // Simulated available time slots
-  const morningSlots = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00","11:30"]
-  const afternoonSlots = ["13:00", "13:30", "14:00","14:30"]
+  const morningSlots = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30"]
+  const afternoonSlots = ["13:00", "13:30", "14:00", "14:30"]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-       console.log("Valor de timeSlot:", timeSlot) // <-- Aquí verás el valor en la consola
-    if (!timeSlot)
-       {
+
+    console.log("Paciente seleccionado:", selectedPatient)
+    const selectedPatientObj = patients.find(p => String(p.cedula) === String(selectedPatient))
+    console.log("Paciente seleccionado:", selectedPatientObj)
+    if (!selectedPatientObj?.informe) {
+      setFormError("El paciente no tiene el informe de matrícula registrado. No puedes agendar la cita.")
+      if (topRef.current) {
+        topRef.current.scrollIntoView({ behavior: "smooth" })
+      }
+      return
+    }
+
+
+    console.log("Valor de timeSlot:", timeSlot) // <-- Aquí verás el valor en la consola
+    if (!timeSlot) {
       setShowTimeSlotError(true)
       console.log("No hay timeslot"),
-      toast({
-      title: "Error",
-      description: "Por favor selecciona una hora.",
-      variant: "destructive",
-      })
-      
+        toast({
+          title: "Error",
+          description: "Por favor selecciona una hora.",
+          variant: "destructive",
+        })
+
       return
     }
 
@@ -105,24 +122,24 @@ export default function NewAppointmentPage() {
     let horaFinal = horaInicio
 
     if (appointmentType !== "revision" && horaInicio) {
-    // Sumar 1 hora a la hora de inicio
-    const [h, m] = horaInicio.split(":").map(Number)
-    const dateObj = new Date()
-    dateObj.setHours(h, m)
-    dateObj.setHours(dateObj.getHours() + 1)
-    const hFinal = String(dateObj.getHours()).padStart(2, "0")
-    const mFinal = String(dateObj.getMinutes()).padStart(2, "0")
-    horaFinal = `${hFinal}:${mFinal}`
-  }else if (appointmentType === "revision" && horaInicio) {
-    // Sumar 30 minutos a la hora de inicio
-    const [h, m] = horaInicio.split(":").map(Number)
-    const dateObj = new Date()
-    dateObj.setHours(h, m)
-    dateObj.setMinutes(dateObj.getMinutes() + 30) 
-    const hFinal = String(dateObj.getHours()).padStart(2, "0")
-    const mFinal = String(dateObj.getMinutes()).padStart(2, "0")
-    horaFinal = `${hFinal}:${mFinal}`
-  }
+      // Sumar 1 hora a la hora de inicio
+      const [h, m] = horaInicio.split(":").map(Number)
+      const dateObj = new Date()
+      dateObj.setHours(h, m)
+      dateObj.setHours(dateObj.getHours() + 1)
+      const hFinal = String(dateObj.getHours()).padStart(2, "0")
+      const mFinal = String(dateObj.getMinutes()).padStart(2, "0")
+      horaFinal = `${hFinal}:${mFinal}`
+    } else if (appointmentType === "revision" && horaInicio) {
+      // Sumar 30 minutos a la hora de inicio
+      const [h, m] = horaInicio.split(":").map(Number)
+      const dateObj = new Date()
+      dateObj.setHours(h, m)
+      dateObj.setMinutes(dateObj.getMinutes() + 30)
+      const hFinal = String(dateObj.getHours()).padStart(2, "0")
+      const mFinal = String(dateObj.getMinutes()).padStart(2, "0")
+      horaFinal = `${hFinal}:${mFinal}`
+    }
 
     setIsLoading(true)
     try {
@@ -152,112 +169,121 @@ export default function NewAppointmentPage() {
       })
 
 
-  const { data: pacienteData } = await supabase
-    .from("paciente")
-    .select("correo, nombre, apellidos")
-    .eq("cedula", selectedPatient)
-    .single()
+      const { data: pacienteData } = await supabase
+        .from("paciente")
+        .select("correo, nombre, apellidos, informe")
+        .eq("cedula", selectedPatient)
+        .single()
 
-  if (pacienteData?.correo) {
-    await fetch("/api/new-appointment-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: pacienteData.correo,
-        nombre: pacienteData.nombre,
-        apellidos: pacienteData.apellidos,
-        fecha: date?.toISOString().split("T")[0],
-        hora_inicio: horaInicio,
-        hora_final: horaFinal,
-        tipo: appointmentType,
-      }),
-    })
-  }
+      if (pacienteData?.correo) {
+        await fetch("/api/new-appointment-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: pacienteData.correo,
+            nombre: pacienteData.nombre,
+            apellidos: pacienteData.apellidos,
+            fecha: date?.toISOString().split("T")[0],
+            hora_inicio: horaInicio,
+            hora_final: horaFinal,
+            tipo: appointmentType,
+          }),
+        })
+      }
 
 
 
       router.push("/dashboard/appointments")
     } catch (error: any) {
-    console.error("Supabase error:", error)
-    toast({
-      title: "Error",
-      description: error?.message || "Hubo un problema al agendar tu cita. Intenta de nuevo.",
-      variant: "destructive",
-    })
-  } finally {
-    setIsLoading(false)
+      console.error("Supabase error:", error)
+      toast({
+        title: "Error",
+        description: error?.message || "Hubo un problema al agendar tu cita. Intenta de nuevo.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
 
-const handleTimeSlotClick = (slot: string) => {
-  setTimeSlot(slot)
-  setShowTimeSlotError(false)
-}
+  const handleTimeSlotClick = (slot: string) => {
+    setTimeSlot(slot)
+    setShowTimeSlotError(false)
+  }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div ref={topRef}  className="max-w-3xl mx-auto">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight text-black">Agendar Nueva Cita</h1>
         <p className="text-muted-foreground">Selecciona el tipo de cita, fecha y hora disponible</p>
       </div>
 
-      
+
 
       <form onSubmit={handleSubmit}>
 
         {/* Card para seleccionar paciente */}
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Paciente</CardTitle>
-          <CardDescription>Selecciona el paciente para la cita</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingPatients ? (
-            <span className="text-muted-foreground">Cargando pacientes...</span>
-          ) : (
-            <select
-              className="w-full border rounded px-3 py-2"
-              value={selectedPatient ?? ""}
-              onChange={e => setSelectedPatient(Number(e.target.value))}
-              required
-            >
-              <option value="" disabled>Selecciona un paciente</option>
-              {patients.map((p) => (
-                <option key={p.cedula} value={p.cedula}>
-                  {p.nombre} {p.apellidos}
-                </option>
-              ))}
-            </select>
-          )}
-        </CardContent>
-      </Card>
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Paciente</CardTitle>
+            <CardDescription>Selecciona el paciente para la cita</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingPatients ? (
+              <span className="text-muted-foreground">Cargando pacientes...</span>
+            ) : (
+              <>
+                <select
+                  className="w-full border rounded px-3 py-2"
+                  value={selectedPatient ?? ""}
+                  onChange={e => {
+                    setSelectedPatient(Number(e.target.value))
+                    setFormError(null)
+                  }}
+                  required
+                >
+                  <option value="" disabled>Selecciona un paciente</option>
+                  {patients.map((p) => (
+                    <option key={p.cedula} value={p.cedula}>
+                      {p.nombre} {p.apellidos}
+                    </option>
+                  ))}
+                </select>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Odontólogo</CardTitle>
-          <CardDescription>Selecciona el odontólogo para la cita</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loadingPatients ? (
-            <span className="text-muted-foreground">Cargando odontólogos...</span>
-          ) : (
-            <select
-              className="w-full border rounded px-3 py-2"
-              value={selectedOdont ?? ""}
-              onChange={e => setSelectedOdont(Number(e.target.value))}
-              required
-            >
-              <option value="" disabled>Selecciona un odontólogo</option>
-              {odont.map((o) => (
-                <option key={o.cedula} value={o.cedula}>
-                  {o.nombre} {o.apellidos}
-                </option>
-              ))}
-            </select>
-          )}
-        </CardContent>
-      </Card>
+                {formError && (
+                  <p className="text-red-500 text-sm mt-2">{formError}</p>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Odontólogo</CardTitle>
+            <CardDescription>Selecciona el odontólogo para la cita</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingOdont ? (
+              <span className="text-muted-foreground">Cargando odontólogos...</span>
+            ) : (
+              <select
+                className="w-full border rounded px-3 py-2"
+                value={selectedOdont ?? ""}
+                onChange={e => setSelectedOdont(Number(e.target.value))}
+                required
+              >
+                <option value="" disabled>Selecciona un odontólogo</option>
+                {odont.map((o) => (
+                  <option key={o.cedula} value={o.cedula}>
+                    {o.nombre} {o.apellidos}
+                  </option>
+                ))}
+              </select>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 md:grid-cols-2">
           <Card>
@@ -351,54 +377,55 @@ const handleTimeSlotClick = (slot: string) => {
                   <h3 className="font-medium mb-2">Mañana (8:00 - 12:00)</h3>
                   <div className="grid grid-cols-4 gap-2">
                     {morningSlots.map((slot) => (
-                    <Button
-                      key={slot}
-                      type="button"
-                      variant={
-                        busySlots.includes(slot)
-                          ? "secondary" // o "destructive" para rojo
-                          : timeSlot === slot
-                          ? "default"
-                          : "outline"
-                      }
-                      onClick={() => handleTimeSlotClick(slot)}
-                      className="h-10"
-                      disabled={busySlots.includes(slot)}
-                    >
-                      {slot}
-                    </Button>
+                      <Button
+                        key={slot}
+                        type="button"
+                        variant={
+                          busySlots.includes(slot)
+                            ? "secondary" // o "destructive" para rojo
+                            : timeSlot === slot
+                              ? "default"
+                              : "outline"
+                        }
+                        onClick={() => handleTimeSlotClick(slot)}
+                        className="h-10"
+                        disabled={busySlots.includes(slot)}
+                      >
+                        {slot}
+                      </Button>
+
 
                     ))}
                   </div>
                 </div>
-                  {showTimeSlotError && (
-                    <p className="text-red-500 text-sm mt-2">Debes seleccionar un horario.</p>
-                  )}
+                {showTimeSlotError && (
+                  <p className="text-red-500 text-sm mt-2">Debes seleccionar un horario.</p>
+                )}
                 <div>
                   <h3 className="font-medium mb-2">Tarde (13:00 - 15:00)</h3>
                   <div className="grid grid-cols-4 gap-2">
                     {afternoonSlots.map((slot) => (
-                    <Button
-                      key={slot}
-                      type="button"
-                      variant={
-                        busySlots.includes(slot)
-                          ? "secondary" // o "destructive" para rojo
-                          : timeSlot === slot
-                          ? "default"
-                          : "outline"
-                      }
-                      onClick={() => handleTimeSlotClick(slot)}
-                      className="h-10"
-                      disabled={busySlots.includes(slot)}
-                      
-                    >
-                      {slot}
-                    </Button>
+                      <Button
+                        key={slot}
+                        type="button"
+                        variant={
+                          busySlots.includes(slot)
+                            ? "secondary" // o "destructive" para rojo
+                            : timeSlot === slot
+                              ? "default"
+                              : "outline"
+                        }
+                        onClick={() => handleTimeSlotClick(slot)}
+                        className="h-10"
+                        disabled={busySlots.includes(slot)}
+
+                      >
+                        {slot}
+                      </Button>
                     ))}
                   </div>
                 </div>
-                  {showTimeSlotError && (
+                {showTimeSlotError && (
                   <p className="text-red-500 text-sm mt-2">Debes seleccionar un horario.</p>
                 )}
               </div>
