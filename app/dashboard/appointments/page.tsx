@@ -115,6 +115,7 @@ const filteredAppointments = appointments.filter(app => {
                   <SelectItem value="Pendiente">Pendiente</SelectItem>
                   <SelectItem value="Completada">Completada</SelectItem>
                   <SelectItem value="Cancelada">Cancelada</SelectItem>
+                  <SelectItem value="Ausente">Ausente</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterType} onValueChange={setFilterType}>

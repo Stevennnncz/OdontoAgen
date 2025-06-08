@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import { Calendar, Clock, MoreVertical, CheckCircle, X, AlertCircle } from "lucide-react"
+import { Calendar, Clock, MoreVertical, CheckCircle, X, AlertCircle, Ban } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
@@ -143,7 +143,6 @@ const handleCancelAppointment = async (id: number) => {
       .from("citas")
       .update({ estado: "Completada" })
       .eq("id", id)
-
     if (!error) {
       toast({
         title: "Cita completada",
@@ -158,6 +157,29 @@ const handleCancelAppointment = async (id: number) => {
       })
     }
   }
+
+  const handleAbsentAppointment = async (id: number) => {
+    const { error } = await supabase
+      .from("citas")
+      .update({ estado: "Ausente" })
+      .eq("id", id)
+
+    if (!error) {
+      toast({
+        title: "Cita ausente",
+        description: "La cita ha sido marcada como ausente.",
+      })
+      if (typeof onStatusChange === "function") onStatusChange(id, "Ausente")
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo marcar la cita como ausente.",
+        variant: "destructive",
+      })
+    }
+  }
+
+
 
   if (filteredAppointments.length === 0) {
     return (
@@ -232,6 +254,10 @@ const handleCancelAppointment = async (id: number) => {
                       <Button size="sm" variant="outline" onClick={() => handleCancelAppointment(appointment.id)}>
                         <X className="h-4 w-4 mr-1" />
                         Cancelar
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => handleAbsentAppointment(appointment.id)}>
+                         <Ban className="h-4 w-4 mr-1" />
+                         Ausente
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
