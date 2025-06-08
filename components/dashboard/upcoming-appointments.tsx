@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, AlertCircle, X} from "lucide-react"
+import { Calendar, Clock, AlertCircle, X } from "lucide-react"
 import Link from "next/link"
 import supabase from "@/lib/supabase-client"
 import { useToast } from "@/components/ui/use-toast"
@@ -23,7 +23,7 @@ export function UpcomingAppointments() {
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
 
-    const handleCancel = async (id: number) => {
+  const handleCancel = async (id: number) => {
     const { error } = await supabase
       .from("citas")
       .update({ estado: "Cancelada" })
@@ -38,7 +38,7 @@ export function UpcomingAppointments() {
         title: "Cita cancelada",
         description: "La cita ha sido cancelada exitosamente.",
       })
-        fetchUpcoming() 
+      fetchUpcoming()
     } else {
       toast({
         title: "Error",
@@ -85,10 +85,10 @@ export function UpcomingAppointments() {
     setLoading(false)
   }
 
-useEffect(() => {
-  setLoading(true)
-  fetchUpcoming()
-}, [])
+  useEffect(() => {
+    setLoading(true)
+    fetchUpcoming()
+  }, [])
 
   const getAppointmentTypeLabel = (type: string) => {
     switch (type) {
@@ -135,11 +135,17 @@ useEffect(() => {
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <span>
-                  {new Date(appointment.fecha).toLocaleDateString("es-ES", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  {
+                    (() => {
+                      const [year, month, day] = appointment.fecha.split('-').map(Number)
+                      const localDate = new Date(year, month - 1, day)
+                      return localDate.toLocaleDateString("es-ES", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })
+                    })()
+                  }
                 </span>
               </div>
               <div className="flex items-center gap-2">
