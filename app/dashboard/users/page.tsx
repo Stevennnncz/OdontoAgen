@@ -78,21 +78,38 @@ export default function UsersPage() {
   setAppointmentsLoading(false)
 }
 
-  const handleDeleteUser = async (cedula: string) => {
-    const { error } = await supabase
-      .from("paciente") // Reemplaza "paciente" con el nombre de tu tabla
-      .delete()
-      .eq("cedula", cedula) // Filtra por la cédula del usuario
-  
-    if (error) {
-      console.error("Error al eliminar usuario:", error.message)
-    } else {
-      console.log("Usuario eliminado exitosamente")
-      // Actualiza la lista de usuarios después de eliminar
-      const { data } = await supabase.from("paciente").select("*")
-      setUsers(data || [])
-    }
+const handleDeleteUser = async (cedula: string) => {
+  // 1. Verifica si el paciente tiene citas registradas
+  const { data: citas, error: citasError } = await supabase
+    .from("citas")
+    .select("id")
+    .eq("paciente", cedula)
+
+  if (citasError) {
+    console.error("Error al verificar citas:", citasError.message)
+    return
   }
+
+  if (citas && citas.length > 0) {
+    alert("No se puede eliminar el usuario porque tiene citas registradas.")
+    return
+  }
+
+  // 2. Si no tiene citas, procede a eliminar
+  const { error } = await supabase
+    .from("paciente")
+    .delete()
+    .eq("cedula", cedula)
+
+  if (error) {
+    console.error("Error al eliminar usuario:", error.message)
+  } else {
+    console.log("Usuario eliminado exitosamente")
+    // Actualiza la lista de usuarios después de eliminar
+    const { data } = await supabase.from("paciente").select("*")
+    setUsers(data || [])
+  }
+}
 
 
   const handleFormSubmit = async (e: React.FormEvent) => {

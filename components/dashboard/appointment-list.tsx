@@ -7,6 +7,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { useToast } from "@/components/ui/use-toast"
 import supabase from "@/lib/supabase-client"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 
 interface Appointment {
   id: number,
@@ -15,8 +17,8 @@ interface Appointment {
   hora_final: string,
   tipo: string,
   estado: "Pendiente" | "Completada" | "Cancelada",
-  paciente?: { nombre: string; apellidos: string } | null,
-  odontologo?: { nombre: string; apellidos: string } | null,
+  paciente?: { cedula: string; nombre: string; apellidos: string } | null,
+  odontologo?: { cedula: string; nombre: string; apellidos: string } | null,
   emergencia?: string,
   duracion?: boolean,
   notas?: string | null
@@ -42,20 +44,30 @@ export function AppointmentList({
   const { toast } = useToast()
   const [open, setOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [completeModalOpen, setCompleteModalOpen] = useState(false)
+  const [completingAppointment, setCompletingAppointment] = useState<Appointment | null>(null)
+  const [completeForm, setCompleteForm] = useState({
+    medicamentos: "",
+    notas: "",
+    fecha_asignacion: "",
+    paciente: "",
+    odontologo: "",
+    cedula: "",
+  })
 
   const filteredAppointments = appointments.filter((app) => {
     const searchMatch =
-        searchTerm === "" ||
-  (app.paciente && (
-    app.paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.paciente.apellidos?.toLowerCase().includes(searchTerm.toLowerCase())
-  )) ||
-  (app.odontologo && (
-    app.odontologo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    app.odontologo.apellidos?.toLowerCase().includes(searchTerm.toLowerCase())
-  )) ||
-  app.fecha?.includes(searchTerm) ||
-  app.id?.toString().includes(searchTerm)
+      searchTerm === "" ||
+      (app.paciente && (
+        app.paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.paciente.apellidos?.toLowerCase().includes(searchTerm.toLowerCase())
+      )) ||
+      (app.odontologo && (
+        app.odontologo.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.odontologo.apellidos?.toLowerCase().includes(searchTerm.toLowerCase())
+      )) ||
+      app.fecha?.includes(searchTerm) ||
+      app.id?.toString().includes(searchTerm)
 
     const statusMatch = filterStatus === "all" || app.estado === filterStatus
     const typeMatch = filterType === "all" || app.tipo === filterType
@@ -67,8 +79,22 @@ export function AppointmentList({
     const isPast = appDate < today
     const dateMatch = filter === "all" || (filter === "upcoming" && isUpcoming) || (filter === "past" && isPast)
 
+
     return searchMatch && statusMatch && typeMatch && dateMatch
   })
+
+  const handleOpenCompleteModal = (appointment: Appointment) => {
+    setCompletingAppointment(appointment)
+    setCompleteForm({
+      medicamentos: "",
+      notas: "",
+      fecha_asignacion: new Date().toISOString().split("T")[0],
+      paciente: appointment.paciente ? `${appointment.paciente.nombre} ${appointment.paciente.apellidos}` : "",
+      odontologo: appointment.odontologo ? `${appointment.odontologo.nombre} ${appointment.odontologo.apellidos}` : "",
+      cedula: appointment.paciente ? appointment.paciente.cedula : "",
+    })
+    setCompleteModalOpen(true)
+  }
 
   const getAppointmentTypeLabel = (tipo: string) => {
     switch (tipo) {
@@ -96,47 +122,98 @@ export function AppointmentList({
     }
   }
 
-const handleCancelAppointment = async (id: number) => {
-  const { error, data } = await supabase
-    .from("citas")
-    .update({ estado: "Cancelada" })
-    .eq("id", id)
-    .select("id, paciente (correo, nombre, apellidos), fecha, hora_inicio, hora_final")
-    .single()
+  const handleCancelAppointment = async (id: number) => {
+    const { error, data } = await supabase
+      .from("citas")
+      .update({ estado: "Cancelada" })
+      .eq("id", id)
+      .select("id, paciente (correo, nombre, apellidos), fecha, hora_inicio, hora_final")
+      .single()
 
-  if (!error) {
-    // Llama a la API para enviar el correo
-    if (data && data.paciente) {
-      const paciente = Array.isArray(data.paciente) ? data.paciente[0] : data.paciente
-      
-      if (paciente?.correo) {
-      await fetch("/api/cancel-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: paciente.correo,
-          nombre: paciente.nombre,
-          apellidos: paciente.apellidos,
-          fecha: data.fecha,
-          hora_inicio: data.hora_inicio,
-          hora_final: data.hora_final,
-        }),
+    if (!error) {
+      // Llama a la API para enviar el correo
+      if (data && data.paciente) {
+        const paciente = Array.isArray(data.paciente) ? data.paciente[0] : data.paciente
+
+        if (paciente?.correo) {
+          await fetch("/api/cancel-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: paciente.correo,
+              nombre: paciente.nombre,
+              apellidos: paciente.apellidos,
+              fecha: data.fecha,
+              hora_inicio: data.hora_inicio,
+              hora_final: data.hora_final,
+            }),
+          })
+        }
+      }
+      toast({
+        title: "Cita cancelada",
+        description: "La cita ha sido cancelada exitosamente y se notificó al paciente.",
+      })
+      if (typeof onStatusChange === "function") onStatusChange(id, "Cancelada")
+    } else {
+      toast({
+        title: "Error",
+        description: "No se pudo cancelar la cita.",
+        variant: "destructive",
       })
     }
-    }
-    toast({
-      title: "Cita cancelada",
-      description: "La cita ha sido cancelada exitosamente y se notificó al paciente.",
-    })
-    if (typeof onStatusChange === "function") onStatusChange(id, "Cancelada")
-  } else {
-    toast({
-      title: "Error",
-      description: "No se pudo cancelar la cita.",
-      variant: "destructive",
-    })
   }
-}
+
+
+
+
+  const handleCompleteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!completingAppointment) return
+
+    // Inserta la información adicional en la tabla correspondiente (ajusta el nombre de la tabla y campos)
+    
+      console.log({
+        
+      medicamentos: completeForm.medicamentos,
+        notas: completeForm.notas,
+        fecha_asignacion: new Date().toISOString().split("T")[0],
+        paciente: completingAppointment.paciente?.cedula,
+        odontologo: completingAppointment.odontologo?.cedula
+
+    })
+    
+    const { error: insertError } = await supabase
+      .from("tratamiento") 
+
+      .insert([{
+        medicamentos: completeForm.medicamentos,
+        notas: completeForm.notas,
+        fecha_asignacion: completeForm.fecha_asignacion,
+        paciente: completingAppointment.paciente?.cedula,
+        odontologo: completingAppointment.odontologo?.cedula
+      }])
+
+    if (insertError) {
+      toast({
+        title: "Error",
+        description: "No se pudo guardar la información de atención.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Marca la cita como completada
+    await handleCompleteAppointment(completingAppointment.id)
+    setCompleteModalOpen(false)
+    setCompletingAppointment(null)
+  }
+
+
+
+
+
+
 
   const handleCompleteAppointment = async (id: number) => {
     const { error } = await supabase
@@ -247,7 +324,7 @@ const handleCancelAppointment = async (id: number) => {
 
                   {appointment.estado === "Pendiente" && (
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => handleCompleteAppointment(appointment.id)}>
+                      <Button size="sm" variant="outline" onClick={() => handleOpenCompleteModal(appointment)}>
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Completar
                       </Button>
@@ -256,8 +333,8 @@ const handleCancelAppointment = async (id: number) => {
                         Cancelar
                       </Button>
                       <Button size="sm" variant="outline" onClick={() => handleAbsentAppointment(appointment.id)}>
-                         <Ban className="h-4 w-4 mr-1" />
-                         Ausente
+                        <Ban className="h-4 w-4 mr-1" />
+                        Ausente
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -303,6 +380,50 @@ const handleCancelAppointment = async (id: number) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+
+
+      <Dialog open={completeModalOpen} onOpenChange={setCompleteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Completar Cita</DialogTitle>
+            <DialogDescription>
+              Ingresa la información de atención para completar la cita.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCompleteSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium">Medicamentos</label>
+              <Input
+                type="text"
+                className="w-full border rounded px-2 py-1"
+                value={completeForm.medicamentos}
+                onChange={e => setCompleteForm(f => ({ ...f, medicamentos: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium">Notas</label>
+              <Textarea
+                className="w-full border rounded px-2 py-1"
+                value={completeForm.notas}
+                onChange={e => setCompleteForm(f => ({ ...f, notas: e.target.value }))}
+              />
+            </div>
+            {/* Puedes agregar más campos si lo necesitas */}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setCompleteModalOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">Guardar y Completar</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+
+
+
+
     </>
   )
 }

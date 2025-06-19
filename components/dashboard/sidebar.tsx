@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import Image from "next/image"
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -19,6 +19,7 @@ import {
   Menu,
   LogOut,
   Hospital,
+  Import,
 } from "lucide-react"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
@@ -65,8 +66,8 @@ export function Sidebar({ className }: SidebarProps) {
     <div className={cn("flex h-full flex-col", className)}>
       <div className="flex h-16 items-center border-b px-4">
         <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-        <Icon className="h-6 w-6 text-black" />
         <span className="text-black">Clínica Dental</span>
+        <Image src="/logo-tec.png" alt="Logo" width={100} height={100} />
         </Link>
       </div>
       <ScrollArea className="flex-1 py-4">

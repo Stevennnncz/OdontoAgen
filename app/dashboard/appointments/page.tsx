@@ -32,14 +32,23 @@ const handleStatusChange = (id: number, newStatus: string) => {
   )
 }
 
+
+
+
+
+
+
+
+
+
 useEffect(() => {
 const fetchAppointments = async () => {
   const { data, error } = await supabase
     .from("citas")
     .select(`
       *,
-      paciente:paciente (nombre, apellidos),
-      odontologo:odontologo (nombre, apellidos)
+      paciente:paciente (cedula, nombre, apellidos),
+      odontologo:odontologo (cedula, nombre, apellidos)
     `)
     console.log("Fetched data:", data)
   if (!error && data) setAppointments(data)
@@ -79,7 +88,7 @@ const filteredAppointments = appointments.filter(app => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-black">Citas</h1>
-          <p className="text-muted-foreground">Gestiona todas tus citas dentales</p>
+          <p className="text-black">Gestiona todas tus citas dentales</p>
         </div>
         <Button asChild>
           <Link href="/dashboard/appointments/new">

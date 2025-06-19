@@ -1,6 +1,7 @@
 "use client"
 import supabase from "@/lib/supabase-client"
 import {User} from "@/lib/auth-context/models/interface"
+import Image from "next/image"
 
 console.log(supabase)
 
@@ -43,11 +44,19 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50 px-4">
-      
-      <Card className="w-full max-w-md">
+        <div className="flex flex-col items-center">
+        <Image
+          src="/logo-tec.png"
+          alt="Logo"
+          width={200}
+          height={200}
+
+        />
+
+        <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Tooth className="h-12 w-12 text-blue-600" />
+            
           </div>
           <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
           <CardDescription>Accede a tu cuenta para gestionar tus citas dentales</CardDescription>
@@ -97,6 +106,8 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  </div>
+
   )
 }
 

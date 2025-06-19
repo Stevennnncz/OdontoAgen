@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { useAuth } from "@/lib/auth-context/auth-context"
 import { CalendarClock, AlertCircle, ShieldCheck, Stethoscope } from "lucide-react"
+import Select from 'react-select'
 
 
 
@@ -215,8 +216,8 @@ export default function NewAppointmentPage() {
   return (
     <div ref={topRef}  className="max-w-3xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight text-black">Agendar Nueva Cita</h1>
-        <p className="text-muted-foreground">Selecciona el tipo de cita, fecha y hora disponible</p>
+        <h1 className="text-3xl font-bold tracking-tight text-black mb-2">Agendar Nueva Cita</h1>
+        <p className="text-primary text-lg">Selecciona el tipo de cita, fecha y hora disponible</p>
       </div>
 
 
@@ -224,7 +225,7 @@ export default function NewAppointmentPage() {
       <form onSubmit={handleSubmit}>
 
         {/* Card para seleccionar paciente */}
-        <Card className="mb-4">
+        <Card className="mb-4 shadow-sm border-teal-100 bg-card">
           <CardHeader>
             <CardTitle>Paciente</CardTitle>
             <CardDescription>Selecciona el paciente para la cita</CardDescription>
@@ -234,23 +235,31 @@ export default function NewAppointmentPage() {
               <span className="text-muted-foreground">Cargando pacientes...</span>
             ) : (
               <>
-                <select
-                  className="w-full border rounded px-3 py-2"
-                  value={selectedPatient ?? ""}
-                  onChange={e => {
-                    setSelectedPatient(Number(e.target.value))
+                <Select
+                  className="w-full"
+                  classNamePrefix="react-select"
+                  options={patients.map((p) => ({
+                    value: p.cedula,
+                    label: `${p.nombre} ${p.apellidos}`
+                  }))}
+                  value={patients.find(p => String(p.cedula) === String(selectedPatient)) ? {
+                    value: selectedPatient,
+                    label: patients.find(p => String(p.cedula) === String(selectedPatient))?.nombre + ' ' + patients.find(p => String(p.cedula) === String(selectedPatient))?.apellidos
+                  } : null}
+                  onChange={option => {
+                    setSelectedPatient(option ? option.value : null)
                     setFormError(null)
                   }}
-                  required
-                >
-                  <option value="" disabled>Selecciona un paciente</option>
-                  {patients.map((p) => (
-                    <option key={p.cedula} value={p.cedula}>
-                      {p.nombre} {p.apellidos}
-                    </option>
-                  ))}
-                </select>
-
+                  placeholder="Selecciona un paciente"
+                  isClearable
+                  styles={{
+                    control: (base) => ({ ...base, backgroundColor: 'white', color: 'black', borderColor: 'var(--border)', boxShadow: 'none' }),
+                    singleValue: (base) => ({ ...base, color: 'black' }),
+                    placeholder: (base) => ({ ...base, color: 'black' }),
+                    menu: (base) => ({ ...base, backgroundColor: 'white', color: 'black' }),
+                    option: (base, state) => ({ ...base, color: 'black', backgroundColor: state.isFocused ? '#e0f2fe' : 'white' }),
+                  }}
+                />
                 {formError && (
                   <p className="text-red-500 text-sm mt-2">{formError}</p>
                 )}
@@ -259,7 +268,7 @@ export default function NewAppointmentPage() {
           </CardContent>
         </Card>
 
-        <Card className="mb-4">
+        <Card className="mb-4 shadow-sm border-teal-100 bg-card">
           <CardHeader>
             <CardTitle>Odontólogo</CardTitle>
             <CardDescription>Selecciona el odontólogo para la cita</CardDescription>
@@ -268,25 +277,34 @@ export default function NewAppointmentPage() {
             {loadingOdont ? (
               <span className="text-muted-foreground">Cargando odontólogos...</span>
             ) : (
-              <select
-                className="w-full border rounded px-3 py-2"
-                value={selectedOdont ?? ""}
-                onChange={e => setSelectedOdont(Number(e.target.value))}
-                required
-              >
-                <option value="" disabled>Selecciona un odontólogo</option>
-                {odont.map((o) => (
-                  <option key={o.cedula} value={o.cedula}>
-                    {o.nombre} {o.apellidos}
-                  </option>
-                ))}
-              </select>
+              <Select
+                className="w-full"
+                classNamePrefix="react-select"
+                options={odont.map((o) => ({
+                  value: o.cedula,
+                  label: `${o.nombre} ${o.apellidos}`
+                }))}
+                value={odont.find(o => String(o.cedula) === String(selectedOdont)) ? {
+                  value: selectedOdont,
+                  label: odont.find(o => String(o.cedula) === String(selectedOdont))?.nombre + ' ' + odont.find(o => String(o.cedula) === String(selectedOdont))?.apellidos
+                } : null}
+                onChange={option => setSelectedOdont(option ? option.value : null)}
+                placeholder="Selecciona un odontólogo"
+                isClearable
+                styles={{
+                  control: (base) => ({ ...base, backgroundColor: 'white', color: 'black', borderColor: 'var(--border)', boxShadow: 'none' }),
+                  singleValue: (base) => ({ ...base, color: 'black' }),
+                  placeholder: (base) => ({ ...base, color: 'black' }),
+                  menu: (base) => ({ ...base, backgroundColor: 'white', color: 'black' }),
+                  option: (base, state) => ({ ...base, color: 'black', backgroundColor: state.isFocused ? '#e0f2fe' : 'white' }),
+                }}
+              />
             )}
           </CardContent>
         </Card>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <Card>
+          <Card className="shadow-sm border-teal-100 bg-card">
             <CardHeader>
               <CardTitle>Tipo de Cita</CardTitle>
               <CardDescription>Selecciona el tipo de atención</CardDescription>
@@ -297,7 +315,7 @@ export default function NewAppointmentPage() {
                   <RadioGroupItem value="urgent" id="urgent" />
                   <div className="grid gap-1.5">
                     <Label htmlFor="urgent" className="font-medium flex items-center">
-                      <AlertCircle className="h-4 w-4 mr-2 text-red-500" />
+                      <AlertCircle className="h-4 w-4 mr-2 text-red-600" />
                       Urgente
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -309,7 +327,7 @@ export default function NewAppointmentPage() {
                   <RadioGroupItem value="revision" id="revision" />
                   <div className="grid gap-1.5">
                     <Label htmlFor="revision" className="font-medium flex items-center">
-                      <CalendarClock className="h-4 w-4 mr-2 text-blue-500" />
+                      <CalendarClock className="h-4 w-4 mr-2 text-teal-600" />
                       Revisión por primera vez
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -321,7 +339,7 @@ export default function NewAppointmentPage() {
                   <RadioGroupItem value="operativa" id="operativa" />
                   <div className="grid gap-1.5">
                     <Label htmlFor="operativa" className="font-medium flex items-center">
-                      <Stethoscope className="h-4 w-4 mr-2 text-yellow-500" />
+                      <Stethoscope className="h-4 w-4 mr-2 text-blue-600" />
                       Operativa
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -333,7 +351,7 @@ export default function NewAppointmentPage() {
                   <RadioGroupItem value="treatment" id="treatment" />
                   <div className="grid gap-1.5">
                     <Label htmlFor="treatment" className="font-medium flex items-center">
-                      <ShieldCheck className="h-4 w-4 mr-2 text-green-500" />
+                      <ShieldCheck className="h-4 w-4 mr-2 text-emerald-600" />
                       Preventiva
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -345,7 +363,7 @@ export default function NewAppointmentPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="shadow-sm border-teal-100 bg-card">
             <CardHeader>
               <CardTitle>Fecha</CardTitle>
               <CardDescription>Selecciona el día de la cita</CardDescription>
@@ -366,7 +384,7 @@ export default function NewAppointmentPage() {
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 shadow-sm border-teal-100 bg-card">
             <CardHeader>
               <CardTitle>Horario Disponible</CardTitle>
               <CardDescription>Selecciona la hora de la cita</CardDescription>
@@ -382,19 +400,23 @@ export default function NewAppointmentPage() {
                         type="button"
                         variant={
                           busySlots.includes(slot)
-                            ? "secondary" // o "destructive" para rojo
+                            ? "secondary"
                             : timeSlot === slot
                               ? "default"
                               : "outline"
                         }
                         onClick={() => handleTimeSlotClick(slot)}
-                        className="h-10"
+                        className={`h-10 transition-all duration-200 ${
+                          busySlots.includes(slot)
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+                            : timeSlot === slot
+                              ? "bg-teal-600 hover:bg-teal-700 text-white border-teal-600"
+                              : "hover:bg-teal-50 hover:border-teal-300 hover:text-teal-700"
+                        }`}
                         disabled={busySlots.includes(slot)}
                       >
                         {slot}
                       </Button>
-
-
                     ))}
                   </div>
                 </div>
@@ -410,15 +432,20 @@ export default function NewAppointmentPage() {
                         type="button"
                         variant={
                           busySlots.includes(slot)
-                            ? "secondary" // o "destructive" para rojo
+                            ? "secondary"
                             : timeSlot === slot
                               ? "default"
                               : "outline"
                         }
                         onClick={() => handleTimeSlotClick(slot)}
-                        className="h-10"
+                        className={`h-10 transition-all duration-200 ${
+                          busySlots.includes(slot)
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+                            : timeSlot === slot
+                              ? "bg-teal-600 hover:bg-teal-700 text-white border-teal-600"
+                              : "hover:bg-teal-50 hover:border-teal-300 hover:text-teal-700"
+                        }`}
                         disabled={busySlots.includes(slot)}
-
                       >
                         {slot}
                       </Button>
@@ -432,7 +459,7 @@ export default function NewAppointmentPage() {
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2">
+          <Card className="md:col-span-2 shadow-sm border-teal-100 bg-card">
             <CardHeader>
               <CardTitle>Notas Adicionales</CardTitle>
               <CardDescription>Proporciona cualquier información adicional relevante para la cita</CardDescription>
@@ -446,10 +473,19 @@ export default function NewAppointmentPage() {
               />
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" type="button" onClick={() => router.back()}>
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => router.back()}
+                className="hover:bg-gray-50 hover:border-gray-300 transition-colors duration-200"
+              >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground transition-colors duration-200 disabled:bg-primary/50"
+              >
                 {isLoading ? "Agendando..." : "Agendar Cita"}
               </Button>
             </CardFooter>

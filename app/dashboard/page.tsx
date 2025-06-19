@@ -51,7 +51,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-black">Bienvenido</h1>
-        <p className="text-muted-foreground">Gestiona tus citas desde este panel de control.</p>
+        <p  className="text-black">Gestiona tus citas desde este panel de control.</p>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
