@@ -53,13 +53,7 @@ export function Sidebar({ className }: SidebarProps) {
       icon: Users,
       href: "/dashboard/users",
       active: pathname === "/dashboard/users",
-    },
-    {
-      label: "Configuración",
-      icon: Settings,
-      href: "/dashboard/settings",
-      active: pathname === "/dashboard/settings",
-    },
+    }
   ]
 
   const SidebarContent = (
