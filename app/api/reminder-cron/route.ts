@@ -27,12 +27,11 @@ export async function POST(req: NextRequest) {
 
   let enviados = 0
   console.log("Citas encontradas:", citas)
-type Paciente = { correo: string; nombre: string; apellidos: string }
-type Cita = { id: number; fecha: string; hora_inicio: string; paciente: Paciente }
+
 
 
 for (const cita of citas ?? []) {
-  // Si paciente es un array, toma el primero; si es objeto, úsalo directo
+  // Si paciente es array, toma el primero; si es objeto, úsalo directo
   const paciente = Array.isArray(cita.paciente) ? cita.paciente[0] : cita.paciente;
   if (!paciente || !paciente.correo) continue;
 
