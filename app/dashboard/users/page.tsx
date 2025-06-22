@@ -435,7 +435,6 @@ const handleDeleteUser = async (cedula: string) => {
               <tr key={tratamiento.id} className="border-b">
                 <td className="px-3 py-2">{tratamiento.fecha_asignacion}</td>
                 <td className="px-3 py-2 capitalize">{tratamiento.medicamentos}</td>
-                
                 <td className="px-3 py-2">
                   {tratamiento.odontologo
                     ? `${tratamiento.odontologo.nombre} ${tratamiento.odontologo.apellidos}`
