@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react"
 import supabase from "@/lib/supabase-client"
 import { debug } from "console"
-import { PencilSquareIcon, TrashIcon,EyeIcon } from "@heroicons/react/24/outline"
+import { PencilSquareIcon, TrashIcon,EyeIcon,  } from "@heroicons/react/24/outline"
+import { PillBottle} from "lucide-react"
 import ProtectedRoute from "@/lib/auth-context/protected-route"
 export default function UsersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -15,6 +16,7 @@ export default function UsersPage() {
   const [isViewAppointmentsOpen, setIsViewAppointmentsOpen] = useState(false)
   const [isViewTreatmentOpen, setIsViewTreatmentOpen] = useState(false)
   const [appointments, setAppointments] = useState<any[]>([])
+  const [treatment, setTreatment] = useState<any[]>([])
   const [appointmentsLoading, setAppointmentsLoading] = useState(false)
   const [treatmentLoading, setTreatmentLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false) // Estado para el modal
@@ -88,7 +90,7 @@ export default function UsersPage() {
   const { data, error } = await supabase
     .from("tratamientos")
     .select(`
-      ( notas,
+      ( id, fecha_asignacion, medicamentos, notas,
       odontologo:odontologo (nombre, apellidos))
     `)
     .eq("paciente", user.cedula)
@@ -346,7 +348,7 @@ const handleDeleteUser = async (cedula: string) => {
       title="Ver citas"
       onClick={() => handleViewTreatment(user)}
     >
-      <EyeIcon className="h-5 w-5 text-green-600" />
+      <PillBottle className="h-5 w-5 text-green-600" />
     </button>
   </div>
 </td>
@@ -363,7 +365,7 @@ const handleDeleteUser = async (cedula: string) => {
       <h2 className="text-xl font-bold mb-4 text-black">
         Citas de {patientToEdit?.nombre} {patientToEdit?.apellidos}
       </h2>
-      {appointmentsLoading ? (
+      {treatmentLoading ? (
         <p className="text-black">Cargando citas...</p>
       ) : appointments.length === 0 ? (
         <p className="text-black">No hay citas registradas para este paciente.</p>
@@ -401,6 +403,54 @@ const handleDeleteUser = async (cedula: string) => {
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           onClick={() => setIsViewAppointmentsOpen(false)}
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+      {isViewTreatmentOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+      <h2 className="text-xl font-bold mb-4 text-black">
+        Citas de {patientToEdit?.nombre} {patientToEdit?.apellidos}
+      </h2>
+      {treatmentLoading ? (
+        <p className="text-black">Cargando tratamientos...</p>
+      ) : appointments.length === 0 ? (
+        <p className="text-black">Este paciente no tiene ningún tratamiento.</p>
+      ) : (
+        <table className="min-w-full rounded-lg overflow-hidden border border-gray-200 bg-white text-black text-sm">
+          <thead className="bg-blue-100">
+            <tr>
+              <th className="px-3 py-2 text-left">Fecha</th>
+              <th className="px-3 py-2 text-left">Medicamentos</th>
+              <th className="px-3 py-2 text-left">Odontologo</th>
+              <th className="px-3 py-2 text-left">Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            {treatment.map((tratamiento) => (
+              <tr key={tratamiento.id} className="border-b">
+                <td className="px-3 py-2">{tratamiento.fecha}</td>
+                <td className="px-3 py-2 capitalize">{tratamiento.medicamentos}</td>
+                <td className="px-3 py-2">{tratamiento.notas}</td>
+                <td className="px-3 py-2">
+                  {tratamiento.odontologo
+                    ? `${tratamiento.odontologo.nombre} ${tratamiento.odontologo.apellidos}`
+                    : "Desconocido"}
+                </td>
+                <td className="px-3 py-2">{tratamiento.notas || "Sin notas"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <div className="flex justify-end mt-4">
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          onClick={() => setIsViewTreatmentOpen(false)}
         >
           Cerrar
         </button>
