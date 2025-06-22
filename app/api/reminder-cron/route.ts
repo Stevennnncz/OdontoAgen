@@ -26,7 +26,10 @@ export async function POST(req: NextRequest) {
   }
 
   let enviados = 0
+  console.log("Citas encontradas:", citas)
   for (const cita of citas ?? []) {
+    console.log("Cita:", cita)
+    console.log("Paciente:", cita.paciente)
     if (!Array.isArray(cita.paciente) || !cita.paciente[0]?.correo) continue
 
     await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/reminder-email`, {
