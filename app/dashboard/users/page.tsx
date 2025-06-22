@@ -90,7 +90,7 @@ const handleViewTreatment = async (user: any) => {
   const { data, error } = await supabase
     .from("tratamiento")
     .select(`
-      ( id, fecha_asignacion, medicamentos, notas,
+      id, fecha_asignacion, medicamentos, notas,
       odontologo:odontologo (nombre, apellidos))
     `)
     .eq("paciente", user.cedula)
