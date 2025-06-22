@@ -418,7 +418,7 @@ const handleDeleteUser = async (cedula: string) => {
       </h2>
       {treatmentLoading ? (
         <p className="text-black">Cargando tratamientos...</p>
-      ) : appointments.length === 0 ? (
+      ) : treatment.length === 0 ? (
         <p className="text-black">Este paciente no tiene ningún tratamiento.</p>
       ) : (
         <table className="min-w-full rounded-lg overflow-hidden border border-gray-200 bg-white text-black text-sm">
