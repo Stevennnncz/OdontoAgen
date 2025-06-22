@@ -30,12 +30,13 @@ export async function POST(req: NextRequest) {
 
 
 
+const siteUrl = process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL;
+
 for (const cita of citas ?? []) {
-  // Si paciente es array, toma el primero; si es objeto, úsalo directo
   const paciente = Array.isArray(cita.paciente) ? cita.paciente[0] : cita.paciente;
   if (!paciente || !paciente.correo) continue;
 
-  await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/reminder-email`, {
+  await fetch(`${siteUrl}/api/reminder-email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
