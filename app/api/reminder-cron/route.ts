@@ -27,23 +27,27 @@ export async function POST(req: NextRequest) {
 
   let enviados = 0
   console.log("Citas encontradas:", citas)
-  for (const cita of citas ?? []) {
-    console.log("Cita:", cita)
-    console.log("Paciente:", cita.paciente)
-    if (!Array.isArray(cita.paciente) || !cita.paciente[0]?.correo) continue
+type Paciente = { correo: string; nombre: string; apellidos: string }
+type Cita = { id: number; fecha: string; hora_inicio: string; paciente: Paciente }
 
-    await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/reminder-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: cita.paciente[0].correo,
-        subject: 'Recordatorio de cita odontológica',
-        text: `Hola ${cita.paciente[0].nombre} ${cita.paciente[0].apellidos},\n\nTe recordamos que tienes una cita el ${cita.fecha} a las ${cita.hora_inicio}.\n\nPor favor, llega 10 minutos antes.`,
-        html: `<p>Hola <b>${cita.paciente[0].nombre} ${cita.paciente[0].apellidos}</b>,<br><br>Te recordamos que tienes una cita el <b>${cita.fecha}</b> a las <b>${cita.hora_inicio}</b>.<br><br>Por favor, llega 10 minutos antes.</p>`
-      })
+
+for (const cita of citas ?? []) {
+  // Si paciente es un array, toma el primero; si es objeto, úsalo directo
+  const paciente = Array.isArray(cita.paciente) ? cita.paciente[0] : cita.paciente;
+  if (!paciente || !paciente.correo) continue;
+
+  await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/reminder-email`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: paciente.correo,
+      subject: 'Recordatorio de cita odontológica',
+      text: `Hola ${paciente.nombre} ${paciente.apellidos},\n\nTe recordamos que tienes una cita el ${cita.fecha} a las ${cita.hora_inicio}.\n\nPor favor, llega 10 minutos antes.`,
+      html: `<p>Hola <b>${paciente.nombre} ${paciente.apellidos}</b>,<br><br>Te recordamos que tienes una cita el <b>${cita.fecha}</b> a las <b>${cita.hora_inicio}</b>.<br><br>Por favor, llega 10 minutos antes.</p>`
     })
-    enviados++
-  }
+  })
+  enviados++
+}
 
   return NextResponse.json({ ok: true, enviados })
 }
