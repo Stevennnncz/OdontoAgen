@@ -68,7 +68,7 @@ export default function UsersPage() {
   setPatientToEdit(user)
   setIsViewAppointmentsOpen(true)
   setAppointmentsLoading(true)
-  // Ajusta el nombre de la columna según tu base de datos (ej: paciente, paciente_id, etc.)
+
   const { data, error } = await supabase
     .from("citas")
     .select(`
@@ -86,7 +86,7 @@ export default function UsersPage() {
   setPatientToEdit(user)
   setIsViewTreatmentOpen(true)
   setTreatmentLoading(true)
-  // Ajusta el nombre de la columna según tu base de datos (ej: paciente, paciente_id, etc.)
+
   const { data, error } = await supabase
     .from("tratamientos")
     .select(`
@@ -96,8 +96,8 @@ export default function UsersPage() {
     .eq("paciente", user.cedula)
     .order("fecha", { ascending: false })
 
-  if (!error && data) setAppointments(data)
-  setAppointmentsLoading(false)
+  if (!error && data) setTreatment(data)
+  setTreatmentLoading(false)
 }
 
 const handleDeleteUser = async (cedula: string) => {
