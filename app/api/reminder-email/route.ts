@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       text,
       html,
     })
+    console.log(`Correo enviado a ${to} con asunto "${subject}"`)
     return NextResponse.json({ ok: true })
   } catch (error) {
     return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 500 })
