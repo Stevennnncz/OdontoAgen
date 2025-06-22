@@ -94,7 +94,7 @@ const handleViewTreatment = async (user: any) => {
       odontologo:odontologo (nombre, apellidos))
     `)
     .eq("paciente", user.cedula)
-    .order("fecha", { ascending: false })
+    .order("fecha_asignacion", { ascending: false })
 
   if (!error && data) setTreatment(data)
   setTreatmentLoading(false)
