@@ -13,8 +13,10 @@ export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isViewAppointmentsOpen, setIsViewAppointmentsOpen] = useState(false)
+  const [isViewTreatmentOpen, setIsViewTreatmentOpen] = useState(false)
   const [appointments, setAppointments] = useState<any[]>([])
   const [appointmentsLoading, setAppointmentsLoading] = useState(false)
+  const [treatmentLoading, setTreatmentLoading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false) // Estado para el modal
   const [searchTerm, setSearchTerm] = useState("")
   const filteredUsers = users.filter(
@@ -70,6 +72,24 @@ export default function UsersPage() {
     .select(`
       id, fecha, hora_inicio, hora_final, tipo, estado, notas,
       odontologo:odontologo (nombre, apellidos)
+    `)
+    .eq("paciente", user.cedula)
+    .order("fecha", { ascending: false })
+
+  if (!error && data) setAppointments(data)
+  setAppointmentsLoading(false)
+}
+
+  const handleViewTreatment = async (user: any) => {
+  setPatientToEdit(user)
+  setIsViewTreatmentOpen(true)
+  setTreatmentLoading(true)
+  // Ajusta el nombre de la columna según tu base de datos (ej: paciente, paciente_id, etc.)
+  const { data, error } = await supabase
+    .from("tratamientos")
+    .select(`
+      ( notas,
+      odontologo:odontologo (nombre, apellidos))
     `)
     .eq("paciente", user.cedula)
     .order("fecha", { ascending: false })
@@ -302,7 +322,7 @@ const handleDeleteUser = async (cedula: string) => {
       }}
     >
       <PencilSquareIcon className="h-5 w-5 text-blue-600" />
-      {/* Si usas Lucide: <Pencil className="h-5 w-5 text-blue-600" /> */}
+      
     </button>
     <button
       className="p-2 rounded hover:bg-red-100"
@@ -318,6 +338,13 @@ const handleDeleteUser = async (cedula: string) => {
       className="p-2 rounded hover:bg-green-100"
       title="Ver citas"
       onClick={() => handleViewAppointments(user)}
+    >
+      <EyeIcon className="h-5 w-5 text-green-600" />
+    </button>
+        <button
+      className="p-2 rounded hover:bg-green-100"
+      title="Ver citas"
+      onClick={() => handleViewTreatment(user)}
     >
       <EyeIcon className="h-5 w-5 text-green-600" />
     </button>

@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         firstName: data.user.user_metadata?.firstName,
         lastName: data.user.user_metadata?.lastName,
         email: data.user.user_metadata?.email,
-        role: data.user.user_metadata?.role || "estudiante", // Ajusta según tu implementación
+        role: data.user.user_metadata?.role || "estudiante", 
       }
   
       setUser(userData)
