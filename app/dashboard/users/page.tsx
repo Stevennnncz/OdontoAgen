@@ -344,11 +344,11 @@ const handleDeleteUser = async (cedula: string) => {
       <EyeIcon className="h-5 w-5 text-green-600" />
     </button>
         <button
-      className="p-2 rounded hover:bg-yellow-100"
+      className="p-2 rounded hover:bg-green-100"
       title="Ver citas"
       onClick={() => handleViewTreatment(user)}
     >
-      <PillBottle className="h-5 w-5 text-green-600" />
+      <PillBottle className="h-5 w-5 text-yellow-600" />
     </button>
   </div>
 </td>
