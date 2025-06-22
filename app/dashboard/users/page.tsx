@@ -64,7 +64,7 @@ export default function UsersPage() {
   }
 
 
-  const handleViewAppointments = async (user: any) => {
+const handleViewAppointments = async (user: any) => {
   setPatientToEdit(user)
   setIsViewAppointmentsOpen(true)
   setAppointmentsLoading(true)
@@ -82,13 +82,13 @@ export default function UsersPage() {
   setAppointmentsLoading(false)
 }
 
-  const handleViewTreatment = async (user: any) => {
+const handleViewTreatment = async (user: any) => {
   setPatientToEdit(user)
   setIsViewTreatmentOpen(true)
   setTreatmentLoading(true)
 
   const { data, error } = await supabase
-    .from("tratamientos")
+    .from("tratamiento")
     .select(`
       ( id, fecha_asignacion, medicamentos, notas,
       odontologo:odontologo (nombre, apellidos))
