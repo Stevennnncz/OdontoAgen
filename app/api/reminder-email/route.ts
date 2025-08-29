@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await transporter.sendMail({
-      from: "OdontoAgen <citasodontologiasc@itcr.ac.cr>",
+      from: "OdontoAgen <odontologiatecsancarlos@gmail.com>",
       to,
       subject,
       text,
