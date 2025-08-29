@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     })
 
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: "OdontoAgen <odontologiatecsancarlos@gmail.com>",
       to: email,
       subject: "Nueva cita odontológica",
       text: `Hola ${nombre} ${apellidos},\n\nse ha agendado una cita el día ${fecha} de ${hora_inicio} a ${hora_final}.\n\nSi tienes dudas, contáctanos.`,
