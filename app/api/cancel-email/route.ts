@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
   try {
     await transporter.sendMail({
-      from: process.env.EMAIL_USER,
+      from: "OdontoAgen <odontologiatecsancarlos@gmail.com>",
       to: email,
       subject: "Cancelación de cita odontológica",
       text: `Hola ${nombre} ${apellidos},\n\nTu cita del día ${fecha} de ${hora_inicio} a ${hora_final} ha sido cancelada por el administrador.\n\nSi tienes dudas, contáctanos.`,
