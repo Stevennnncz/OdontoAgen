@@ -17,9 +17,17 @@ export async function POST(req: NextRequest) {
     await transporter.sendMail({
       from: "OdontoAgen <odontologiatecsancarlos@gmail.com>",
       to: email,
-      subject: "Nueva cita odontológica",
-      text: `Hola ${nombre} ${apellidos},\n\nse ha agendado una cita el día ${fecha} de ${hora_inicio} a ${hora_final}.\n\nSi tienes dudas, contáctanos.`,
-    })
+      subject: "Cita Odontología TEC Agendada",
+      text: `Estimado/a ${nombre} ${apellidos},
+      Le confirmamos que su cita en la Clínica de Odontología del TEC ha sido agendada para el día ${fecha}, de ${hora_inicio} a ${hora_final}.
+      Le recordamos que las ausencias injustificadas generan un cobro. Si no podrá asistir, por favor notifíquenos con al menos 24 horas de antelación.
+
+      Este correo es únicamente para notificaciones automáticas de citas.  
+      Para consultas o cambios, escríbanos a: citasodontologiasc@itcr.ac.cr  
+      O visítenos directamente en la clínica.
+
+      Atentamente,  
+      Clínica de Odontología TEC San Carlos`    })
 
     return NextResponse.json({ ok: true })
   } catch (error) {
